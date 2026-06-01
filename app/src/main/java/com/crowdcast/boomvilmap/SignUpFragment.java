@@ -1,0 +1,24 @@
+package com.crowdcast.boomvilmap;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+public class SignUpFragment extends Fragment {
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_signup, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        view.findViewById(R.id.button_back).setOnClickListener(v -> ((MainActivity) requireActivity()).showLogin());
+        view.findViewById(R.id.button_signup_submit).setOnClickListener(v -> ((MainActivity) requireActivity()).showMap());
+    }
+}

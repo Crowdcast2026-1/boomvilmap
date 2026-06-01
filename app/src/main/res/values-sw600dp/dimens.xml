@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="space_xs">6dp</dimen>
+    <dimen name="space_sm">8dp</dimen>
+    <dimen name="space_md">10dp</dimen>
+    <dimen name="space_lg">14dp</dimen>
+    <dimen name="space_xl">20dp</dimen>
+    <dimen name="space_2xl">24dp</dimen>
+    <dimen name="space_3xl">32dp</dimen>
+    <dimen name="space_4xl">40dp</dimen>
+    <dimen name="line_spacing_extra">5dp</dimen>
+
+    <dimen name="screen_padding">32dp</dimen>
+    <dimen name="content_padding">32dp</dimen>
+    <dimen name="section_padding">28dp</dimen>
+    <dimen name="top_screen_padding">64dp</dimen>
+    <dimen name="bottom_screen_padding">40dp</dimen>
+
+    <dimen name="header_height">72dp</dimen>
+    <dimen name="header_tall_height">96dp</dimen>
+    <dimen name="bottom_nav_height">88dp</dimen>
+    <dimen name="bottom_nav_min_height">88dp</dimen>
+
+    <dimen name="input_height">52dp</dimen>
+    <dimen name="input_compact_height">46dp</dimen>
+    <dimen name="input_trailing_icon_padding">60dp</dimen>
+    <dimen name="button_height">54dp</dimen>
+    <dimen name="button_compact_height">40dp</dimen>
+    <dimen name="button_icon_size">44dp</dimen>
+
+    <dimen name="logo_size">72dp</dimen>
+    <dimen name="splash_logo_size">112dp</dimen>
+    <dimen name="splash_progress_width">200dp</dimen>
+    <dimen name="empty_icon_size">128dp</dimen>
+    <dimen name="profile_avatar_size">72dp</dimen>
+    <dimen name="spot_image_size">80dp</dimen>
+    <dimen name="favorite_image_size">84dp</dimen>
+    <dimen name="favorite_delete_size">48dp</dimen>
+
+    <dimen name="detail_hero_height">300dp</dimen>
+    <dimen name="detail_action_top_margin">48dp</dimen>
+    <dimen name="detail_metric_size">96dp</dimen>
+    <dimen name="weather_tile_height">84dp</dimen>
+    <dimen name="weekly_card_height">200dp</dimen>
+    <dimen name="weekly_chart_height">132dp</dimen>
+
+    <dimen name="map_search_height">52dp</dimen>
+    <dimen name="map_legend_width">96dp</dimen>
+    <dimen name="map_legend_top_margin">92dp</dimen>
+    <dimen name="map_bottom_sheet_height">420dp</dimen>
+    <dimen name="map_bottom_sheet_peek_height">300dp</dimen>
+    <dimen name="bottom_sheet_handle_width">48dp</dimen>
+    <dimen name="bottom_sheet_handle_height">5dp</dimen>
+    <dimen name="password_strength_bar_height">5dp</dimen>
+    <dimen name="password_strength_bar_gap">8dp</dimen>
+</resources>
