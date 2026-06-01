@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_background"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/detail_hero_height">
+
+        <ImageView
+            android:id="@+id/image_hero"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+
+        <ImageButton
+            android:id="@+id/button_back"
+            android:layout_width="@dimen/button_icon_size"
+            android:layout_height="@dimen/button_icon_size"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="@dimen/screen_padding"
+            android:layout_marginTop="@dimen/detail_action_top_margin"
+            android:background="@drawable/bg_card"
+            android:src="@drawable/ic_arrow_back_24"
+            android:tint="@color/text_primary" />
+
+        <ImageButton
+            android:id="@+id/button_bookmark"
+            android:layout_width="@dimen/button_icon_size"
+            android:layout_height="@dimen/button_icon_size"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="@dimen/detail_action_top_margin"
+            android:layout_marginEnd="@dimen/screen_padding"
+            android:background="@drawable/bg_card"
+            android:src="@drawable/ic_bookmark_24"
+            android:tint="@color/text_primary" />
+    </FrameLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/bottom_screen_padding">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:orientation="vertical"
+                android:padding="@dimen/content_padding">
+
+                <TextView
+                    android:id="@+id/text_detail_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_md"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/text_detail_region"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_chip_blue"
+                        android:paddingHorizontal="@dimen/space_lg"
+                        android:paddingVertical="@dimen/space_xs"
+                        android:textColor="@color/primary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/text_detail_category"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_sm"
+                        android:background="@drawable/bg_chip_gray"
+                        android:paddingHorizontal="@dimen/space_lg"
+                        android:paddingVertical="@dimen/space_xs"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/text_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_lg"
+                    android:lineSpacingExtra="@dimen/line_spacing_extra"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_md"
+                android:background="@color/white"
+                android:orientation="vertical"
+                android:padding="@dimen/content_padding">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/date_select"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/edit_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/input_compact_height"
+                    android:layout_marginTop="@dimen/space_lg"
+                    android:background="@drawable/bg_input"
+                    android:focusable="false"
+                    android:hint="날짜 선택"
+                    android:paddingHorizontal="@dimen/space_lg" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/screen_padding"
+                android:background="@drawable/bg_card"
+                android:orientation="vertical"
+                android:padding="@dimen/section_padding">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/current_congestion"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_lg"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/text_level_icon"
+                        android:layout_width="@dimen/detail_metric_size"
+                        android:layout_height="@dimen/detail_metric_size"
+                        android:background="@drawable/bg_moderate"
+                        android:gravity="center"
+                        android:text="🙂\n보통"
+                        android:textColor="@color/moderate_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_xl"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/text_visitors"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <ProgressBar
+                            android:id="@+id/progress_congestion"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/space_md"
+                            android:layout_marginTop="@dimen/space_lg"
+                            android:max="100"
+                            android:progress="60"
+                            android:progressTint="@color/congestion_moderate" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_md"
+                            android:text="맑음 · 주말 · 벚꽃"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/screen_padding"
+                android:orientation="horizontal">
+
+                <TextView android:id="@+id/weather_sky" android:layout_width="0dp" android:layout_height="@dimen/weather_tile_height" android:layout_weight="1" android:background="@drawable/bg_card" android:gravity="center" android:text="맑음\n23°C" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/weather_wind" android:layout_width="0dp" android:layout_height="@dimen/weather_tile_height" android:layout_marginStart="@dimen/space_md" android:layout_weight="1" android:background="@drawable/bg_card" android:gravity="center" android:text="바람\n2.3m/s" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/weather_humidity" android:layout_width="0dp" android:layout_height="@dimen/weather_tile_height" android:layout_marginStart="@dimen/space_md" android:layout_weight="1" android:background="@drawable/bg_card" android:gravity="center" android:text="습도\n54%" android:textColor="@color/text_primary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/weekly_card_height"
+                android:layout_margin="@dimen/screen_padding"
+                android:background="@drawable/bg_card"
+                android:orientation="vertical"
+                android:padding="@dimen/section_padding">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/weekly_prediction"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <com.crowdcast.boomvilmap.WeeklyCongestionChartView
+                    android:id="@+id/chart_weekly"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/weekly_chart_height"
+                    android:layout_marginTop="@dimen/space_lg" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
