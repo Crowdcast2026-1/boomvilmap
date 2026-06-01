@@ -1,3 +1,25 @@
 <resources>
-    <string name="app_name">boomvilmap</string>
+    <string name="app_name">오늘 얼마나 붐빌까?</string>
+    <string name="app_subtitle">AI 기반 관광지 혼잡도 예측</string>
+    <string name="loading">불러오는 중...</string>
+    <string name="email">이메일</string>
+    <string name="password">비밀번호</string>
+    <string name="login">로그인</string>
+    <string name="signup">회원가입</string>
+    <string name="forgot_password">비밀번호를 잊으셨나요?</string>
+    <string name="or">또는</string>
+    <string name="login_kakao">카카오로 로그인</string>
+    <string name="login_google">Google로 로그인</string>
+    <string name="search_tour_spot">관광지 검색</string>
+    <string name="nearby_spots">내 주변 관광지</string>
+    <string name="view_all">전체보기</string>
+    <string name="date_select">날짜 선택</string>
+    <string name="current_congestion">현재 혼잡도</string>
+    <string name="weekly_prediction">이번 주 혼잡도 예측</string>
+    <string name="favorites">즐겨찾기</string>
+    <string name="mypage">마이페이지</string>
+    <string name="tab_map">지도</string>
+    <string name="tab_search">검색</string>
+    <string name="tab_favorites">즐겨찾기</string>
+    <string name="tab_mypage">마이페이지</string>
 </resources>
