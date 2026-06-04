@@ -86,43 +86,6 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="@dimen/section_padding"
-            android:text="알림 설정"
-            android:textColor="@color/text_muted"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/screen_padding"
-            android:layout_marginTop="@dimen/space_md"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical">
-
-            <Switch
-                android:id="@+id/switch_congestion_alert"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/header_height"
-                android:paddingHorizontal="@dimen/section_padding"
-                android:text="혼잡도 알림"
-                android:textColor="@color/text_primary"
-                android:textStyle="bold"
-                android:checked="true" />
-
-            <Switch
-                android:id="@+id/switch_event_alert"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/header_height"
-                android:paddingHorizontal="@dimen/section_padding"
-                android:text="이벤트 알림"
-                android:textColor="@color/text_primary"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xl"
             android:paddingHorizontal="@dimen/section_padding"
             android:text="앱 정보"
