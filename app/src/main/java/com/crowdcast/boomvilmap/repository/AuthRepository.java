@@ -51,4 +51,17 @@ public class AuthRepository {
                     callback.onFailure("DB 저장 실패: " + e.getMessage());
                 });
     }
+
+    //로그인
+    public void login(String email, String password, AuthCallback callback) {
+        auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onSuccess();
+                    } else {
+                        String errorMsg = task.getException() != null ? task.getException().getMessage() : "로그인 실패";
+                        callback.onFailure(errorMsg);
+                    }
+                });
+    }
 }
