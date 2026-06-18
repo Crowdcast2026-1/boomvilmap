@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.crowdcast.boomvilmap.KoreaMapView
+        <com.crowdcast.boomvilmap.ui.KoreaMapView
             android:id="@+id/korea_map"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />

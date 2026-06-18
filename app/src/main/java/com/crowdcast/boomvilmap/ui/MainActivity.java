@@ -1,4 +1,4 @@
-package com.crowdcast.boomvilmap;
+package com.crowdcast.boomvilmap.ui;
 
 import android.os.Bundle;
 import android.view.View;
@@ -9,6 +9,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
+import com.crowdcast.boomvilmap.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)
-                .commit();
+                .commitAllowingStateLoss();
     }
 
     public void showSplash() { replace(new SplashFragment(), false); }

@@ -1,4 +1,4 @@
-package com.crowdcast.boomvilmap;
+package com.crowdcast.boomvilmap.model;
 
 public class Spot {
     public enum Level { LOW, MODERATE, HIGH }

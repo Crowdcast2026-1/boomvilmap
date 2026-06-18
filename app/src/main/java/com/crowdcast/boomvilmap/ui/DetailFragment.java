@@ -1,4 +1,4 @@
-package com.crowdcast.boomvilmap;
+package com.crowdcast.boomvilmap.ui;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,6 +9,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import com.crowdcast.boomvilmap.R;
+import com.crowdcast.boomvilmap.model.Spot;
+import com.crowdcast.boomvilmap.SpotRepository;
 
 public class DetailFragment extends Fragment {
     private static final String ARG_SPOT_ID = "spot_id";

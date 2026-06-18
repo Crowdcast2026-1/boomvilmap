@@ -1,4 +1,4 @@
-package com.crowdcast.boomvilmap;
+package com.crowdcast.boomvilmap.adepter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.crowdcast.boomvilmap.R;
+import com.crowdcast.boomvilmap.model.Spot;
 
 import java.util.List;
 

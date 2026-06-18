@@ -1,5 +1,7 @@
 package com.crowdcast.boomvilmap;
 
+import com.crowdcast.boomvilmap.model.Spot;
+
 import java.util.ArrayList;
 import java.util.List;
 
