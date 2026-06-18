@@ -1,4 +1,4 @@
-package com.crowdcast.boomvilmap;
+package com.crowdcast.boomvilmap.ui;
 
 import android.os.Bundle;
 import android.text.InputType;
@@ -12,6 +12,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import com.crowdcast.boomvilmap.R;
 
 public class LoginFragment extends Fragment {
     private boolean passwordVisible = false;

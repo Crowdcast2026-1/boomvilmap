@@ -1,4 +1,4 @@
-package com.crowdcast.boomvilmap;
+package com.crowdcast.boomvilmap.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;

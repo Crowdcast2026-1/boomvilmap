@@ -1,4 +1,4 @@
-package com.crowdcast.boomvilmap;
+package com.crowdcast.boomvilmap.ui;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,6 +10,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.crowdcast.boomvilmap.R;
+import com.crowdcast.boomvilmap.adepter.SpotAdapter;
+import com.crowdcast.boomvilmap.SpotRepository;
 
 public class MapFragment extends Fragment {
     @Nullable
