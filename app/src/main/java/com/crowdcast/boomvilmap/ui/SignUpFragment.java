@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.crowdcast.boomvilmap.R;
+import com.crowdcast.boomvilmap.repository.AuthRepository;
 import com.crowdcast.boomvilmap.util.CaptchaGenerator;
 
 public class SignUpFragment extends Fragment {
@@ -33,6 +34,9 @@ public class SignUpFragment extends Fragment {
     // 캡챠 정답 임시 저장소
     private String currentCaptchaAnswer;
 
+    // 리포지토리
+    private AuthRepository authRepository;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -45,6 +49,8 @@ public class SignUpFragment extends Fragment {
 
         initViews(view);
         setupListeners();
+
+        authRepository = new AuthRepository();
 
         // 화면이 생성될 때 캡챠 이미지 최초 로드
         refreshCaptcha();
@@ -132,18 +138,33 @@ public class SignUpFragment extends Fragment {
             return;
         }
 
-        // ============================================
-        // 검증 성공 시 처리할 로직 (추후 AuthRepository 연동 구역)
-        // ============================================
         showToast("유효성 검사 통과! 가입 진행 중...");
 
-        // TODO: AuthRepository에 계정 생성 요청 후 결과값에 따라 화면 이동하도록 변경
-        // 임시로 기존 로직(Map으로 이동) 유지
-        ((MainActivity) requireActivity()).showMap();
+        // 가입 진행중 <= 클릭 막기
+        buttonSubmit.setEnabled(false);
+        buttonSubmit.setText("가입 처리 중...");
+
+        // 저장소에 가입 요청 던지기
+        authRepository.signUp(email, password, nickname, new AuthRepository.AuthCallback() {
+            @Override
+            public void onSuccess() {
+                showToast("회원가입이 완료되었습니다!");
+                ((MainActivity) requireActivity()).showMap();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                showToast("가입 실패: " + errorMessage);
+                buttonSubmit.setEnabled(true);
+                buttonSubmit.setText("가입하기");
+            }
+        });
     }
 
     // 안내 메시지용 토스트
     private void showToast(String message) {
-        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+        if (getContext() != null && isAdded()) {
+            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+        }
     }
 }
