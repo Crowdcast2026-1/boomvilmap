@@ -48,6 +48,8 @@ public class DetailFragment extends Fragment {
         description.setText(spot.description);
         visitors.setText(String.format("%,d명 방문", spot.visitors));
 
-        view.findViewById(R.id.button_back).setOnClickListener(v -> ((MainActivity) requireActivity()).showMap());
+        view.findViewById(R.id.button_back).setOnClickListener(v -> {
+            requireActivity().getSupportFragmentManager().popBackStack();
+        });
     }
 }
