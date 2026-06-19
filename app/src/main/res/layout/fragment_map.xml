@@ -10,8 +10,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.crowdcast.boomvilmap.ui.KoreaMapView
-            android:id="@+id/korea_map"
+        <fragment
+            android:id="@+id/google_map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
@@ -63,7 +64,8 @@
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="● 여유" android:textColor="@color/congestion_low" android:textSize="11sp" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_sm" android:text="● 보통" android:textColor="@color/congestion_moderate" android:textSize="11sp" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_sm" android:text="● 혼잡" android:textColor="@color/congestion_high" android:textSize="11sp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_sm" android:text="● 약간 붐빔" android:textColor="@color/congestion_crowded" android:textSize="11sp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_sm" android:text="● 붐빔" android:textColor="@color/congestion_high" android:textSize="11sp" />
         </LinearLayout>
     </FrameLayout>
 

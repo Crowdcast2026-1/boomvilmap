@@ -72,22 +72,38 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Favori
         return favorites.size();
     }
 
+    // 실제 UI 출력 시에만 영문 4단계를 한글 4대 라벨 명세로 변환
     private String getLevelLabel(Spot.Level level) {
-        if (level == Spot.Level.LOW) return "여유";
-        if (level == Spot.Level.MODERATE) return "보통";
-        return "혼잡";
+        if (level == null) return "여유";
+        switch (level) {
+            case VERY_CROWDED: return "붐빔";
+            case CROWDED: return "약간 붐빔";
+            case NORMAL: return "보통";
+            case FREE:
+            default: return "여유";
+        }
     }
 
     private int getLevelBackground(Spot.Level level) {
-        if (level == Spot.Level.LOW) return R.drawable.bg_low;
-        if (level == Spot.Level.MODERATE) return R.drawable.bg_moderate;
-        return R.drawable.bg_high;
+        if (level == null) return R.drawable.bg_low;
+        switch (level) {
+            case VERY_CROWDED: return R.drawable.bg_high;
+            case CROWDED: return R.drawable.bg_crowded;
+            case NORMAL: return R.drawable.bg_moderate;
+            case FREE:
+            default: return R.drawable.bg_low;
+        }
     }
 
     private int getLevelTextColor(Spot.Level level) {
-        if (level == Spot.Level.LOW) return R.color.low_text;
-        if (level == Spot.Level.MODERATE) return R.color.moderate_text;
-        return R.color.high_text;
+        if (level == null) return R.color.low_text;
+        switch (level) {
+            case VERY_CROWDED: return R.color.high_text;
+            case CROWDED: return R.color.crowded_text;
+            case NORMAL: return R.color.moderate_text;
+            case FREE:
+            default: return R.color.low_text;
+        }
     }
 
     static class FavoriteViewHolder extends RecyclerView.ViewHolder {

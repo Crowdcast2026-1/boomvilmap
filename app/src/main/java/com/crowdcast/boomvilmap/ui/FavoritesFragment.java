@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.crowdcast.boomvilmap.adepter.FavoriteAdapter;
 import com.crowdcast.boomvilmap.R;
-import com.crowdcast.boomvilmap.SpotRepository;
+import com.crowdcast.boomvilmap.repository.SpotRepository;
 
 public class FavoritesFragment extends Fragment {
     @Nullable
