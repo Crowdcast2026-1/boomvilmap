@@ -42,7 +42,7 @@ public class SpotRepository {
     }
 
     // 📊 주간 차트(WeeklyCongestionChartView)에 부어줄 영문 4단계 일주일 단위 더미 데이터 생성기
-    public static List<Spot.Level> getWeeklyPrediction(int spotId) {
+    publi<Spot.Level> getWeeklyPrediction(int spotId) {
         List<Spot.Level> weeklyData = new ArrayList<>();
 
         if (spotId % 2 == 0) {
