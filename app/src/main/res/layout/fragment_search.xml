@@ -16,6 +16,7 @@
         android:paddingHorizontal="@dimen/screen_padding">
 
         <ImageView
+            android:id="@+id/image_search_icon"
             android:layout_width="@dimen/space_2xl"
             android:layout_height="@dimen/space_2xl"
             android:src="@drawable/ic_search_24"

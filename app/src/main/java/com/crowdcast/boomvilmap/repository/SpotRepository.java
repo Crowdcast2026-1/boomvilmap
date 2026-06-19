@@ -34,6 +34,42 @@ public class SpotRepository {
         return spots;
     }
 
+    // 관광지 검색
+    public static List<Spot> searchSpots(String query) {
+        List<Spot> allSpots = getSpots();
+        List<Spot> filteredSpots = new ArrayList<>();
+
+        // 키워드 필터링
+        if (query == null || query.trim().isEmpty()) {
+            filteredSpots.addAll(allSpots);
+        } else {
+            String cleanQuery = query.toLowerCase().trim();
+            for (Spot spot : allSpots) {
+                if (spot.name.toLowerCase().contains(cleanQuery) ||
+                        spot.region.toLowerCase().contains(cleanQuery)) {
+                    filteredSpots.add(spot);
+                }
+            }
+        }
+
+        // 정렬 알고리즘
+        filteredSpots.sort((spot1, spot2) -> {
+            // 혼잡도 레벨이 없을 경우 예외 방지 안전장치
+            int level1 = spot1.level != null ? spot1.level.ordinal() : 0;
+            int level2 = spot2.level != null ? spot2.level.ordinal() : 0;
+
+            if (level1 != level2) {
+                // 혼잡도 내림차순 정렬
+                return Integer.compare(level2, level1);
+            } else {
+                // 혼잡도가 같으면 이름 가나다/ABC 오름차순 정렬
+                return spot1.name.compareTo(spot2.name);
+            }
+        });
+
+        return filteredSpots;
+    }
+
     public static Spot findById(int id) {
         for (Spot spot : getSpots()) {
             if (spot.id == id) return spot;
@@ -63,5 +99,36 @@ public class SpotRepository {
             weeklyData.add(Spot.Level.CROWDED);       // 일
         }
         return weeklyData;
+    }
+
+    // 하버사인 공식을 이용해 두 위경도 사이의 거리를 미터(m) 단위로 계산
+    private static double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        double R = 6371e3; // 지구 반지름 (미터 단위)
+        double phi1 = Math.toRadians(lat1);
+        double phi2 = Math.toRadians(lat2);
+        double deltaPhi = Math.toRadians(lat2 - lat1);
+        double deltaLambda = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                        Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c; // 거리 (m)
+    }
+
+    // 기준 위치에서 가장 가까운 상위 5개 관광지 반환
+    public static List<Spot> getNearbySpots(double currentLat, double currentLng) {
+        List<Spot> allSpots = new ArrayList<>(getSpots());
+
+        // 거리 기준 오름차순 정렬
+        allSpots.sort((spot1, spot2) -> {
+            double dist1 = calculateDistance(currentLat, currentLng, spot1.lat, spot1.lng);
+            double dist2 = calculateDistance(currentLat, currentLng, spot2.lat, spot2.lng);
+            return Double.compare(dist1, dist2);
+        });
+
+        // 상위 5개만 추출 (데이터가 5개 미만일 경우를 대비해 Math.min 안전장치)
+        return allSpots.subList(0, Math.min(5, allSpots.size()));
     }
 }

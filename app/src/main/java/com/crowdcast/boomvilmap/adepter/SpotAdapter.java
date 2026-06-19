@@ -5,14 +5,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.crowdcast.boomvilmap.R;
 import com.crowdcast.boomvilmap.model.Spot;
-
 import java.util.List;
 
 public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder> {
@@ -20,12 +17,19 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
         void onSpotClick(int spotId);
     }
 
-    private final List<Spot> spots;
+    // 외부 데이터 교체를 위해 final 제약 해제
+    private List<Spot> spots;
     private final OnSpotClickListener listener;
 
     public SpotAdapter(List<Spot> spots, OnSpotClickListener listener) {
         this.spots = spots;
         this.listener = listener;
+    }
+
+    // 새로운 검색 리스트로 어댑터 갱신
+    public void updateData(List<Spot> newSpots) {
+        this.spots = newSpots;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -47,7 +51,7 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
         holder.level.setBackgroundResource(getLevelBackground(spot.level));
         holder.level.setTextColor(holder.itemView.getContext().getColor(getLevelTextColor(spot.level)));
 
-        Glide.with(holder.image)
+        Glide.with(holder.image.getContext()) // 오류 방지용 컨텍스트 수정
                 .load(spot.imageUrl)
                 .centerCrop()
                 .into(holder.image);
@@ -64,7 +68,6 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
         return spots == null ? 0 : spots.size();
     }
 
-    // 실제 UI 출력 시에만 영문 4단계를 한글 4대 라벨 명세로 변환
     private String getLevelLabel(Spot.Level level) {
         if (level == null) return "여유";
         switch (level) {
