@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.crowdcast.boomvilmap.R;
 import com.crowdcast.boomvilmap.adepter.SpotAdapter;
-import com.crowdcast.boomvilmap.SpotRepository;
+import com.crowdcast.boomvilmap.repository.SpotRepository;
 
 public class SearchFragment extends Fragment {
     @Nullable
