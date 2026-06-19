@@ -1,7 +1,8 @@
 package com.crowdcast.boomvilmap.model;
 
 public class Spot {
-    public enum Level { LOW, MODERATE, HIGH }
+    //여유, 보통, 약간붐빔, 붐빔
+    public enum Level {FREE,NORMAL,CROWDED,VERY_CROWDED}
 
     public final int id;
     public final String name;
