@@ -10,7 +10,7 @@ public class SpotRepository {
     public static List<Spot> getSpots() {
         List<Spot> spots = new ArrayList<>();
 
-        // 🗺️ map 브랜치 전용: 서울 카메라 락 권역 안의 랜드마크 5개 더미 데이터셋
+        // map 브랜치 전용: 서울 카메라 락 권역 안의 랜드마크 5개 더미 데이터셋
         spots.add(new Spot(1, "광화문·덕수궁", "서울", "역사/문화",
                 "https://images.unsplash.com/photo-1599033769063-fcd3ef816810?w=800&h=400&fit=crop&auto=format",
                 Spot.Level.VERY_CROWDED, 12480, "조선 왕조의 법궁인 경복궁과 근대 역사가 살아 숨 쉬는 덕수궁 권역입니다. 주말에는 문화 행사로 인파가 몰릴 수 있습니다.", 37.5759, 126.9768));
@@ -41,8 +41,8 @@ public class SpotRepository {
         return getSpots().get(0);
     }
 
-    // 📊 주간 차트(WeeklyCongestionChartView)에 부어줄 영문 4단계 일주일 단위 더미 데이터 생성기
-    publi<Spot.Level> getWeeklyPrediction(int spotId) {
+    // 주간 차트(WeeklyCongestionChartView)에 부어줄 4단계 일주일 단위 더미 데이터 생성기
+    public static List<Spot.Level> getWeeklyPrediction(int spotId) {
         List<Spot.Level> weeklyData = new ArrayList<>();
 
         if (spotId % 2 == 0) {
