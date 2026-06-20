@@ -1,83 +1,177 @@
 package com.crowdcast.boomvilmap.repository;
 
+import android.widget.Toast;
+
+import com.crowdcast.boomvilmap.model.CollectAllResponse;
+import com.crowdcast.boomvilmap.model.CurrentPopulationResponse;
 import com.crowdcast.boomvilmap.model.Spot;
+import com.crowdcast.boomvilmap.network.RetrofitClient;
+import com.crowdcast.boomvilmap.network.SeoulCrowdApiService;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SpotRepository {
 
-    public static List<Spot> getSpots() {
-        List<Spot> spots = new ArrayList<>();
+    // 파이어베이스와 API로 불러온 데이터를 메모리에 임시 저장(캐싱)하는 변수
+    private static List<Spot> cachedSpots = new ArrayList<>();
 
-        // map 브랜치 전용: 서울 카메라 락 권역 안의 랜드마크 5개 더미 데이터셋
-        spots.add(new Spot(1, "광화문·덕수궁", "서울", "역사/문화",
-                "https://images.unsplash.com/photo-1599033769063-fcd3ef816810?w=800&h=400&fit=crop&auto=format",
-                Spot.Level.VERY_CROWDED, 12480, "조선 왕조의 법궁인 경복궁과 근대 역사가 살아 숨 쉬는 덕수궁 권역입니다. 주말에는 문화 행사로 인파가 몰릴 수 있습니다.", 37.5759, 126.9768));
-
-        spots.add(new Spot(2, "강남역", "서울", "상권/쇼핑",
-                "https://images.unsplash.com/photo-1647767444020-01b866b7e00c?w=800&h=400&fit=crop&auto=format",
-                Spot.Level.CROWDED, 28450, "대한민국 최대 규모의 지하상가와 오피스 밀집 지역입니다. 평일 출퇴근 시간대와 금요일 저녁 시간에 매우 혼잡합니다.", 37.4979, 127.0276));
-
-        spots.add(new Spot(3, "홍대거리", "서울", "문화/예술",
-                "https://images.unsplash.com/photo-1613186448181-7ba25cc0ff2a?w=800&h=400&fit=crop&auto=format",
-                Spot.Level.NORMAL, 18920, "버스킹 문화와 인디 예술, 젊음의 에너지가 넘치는 거리입니다. 저녁 시간대 및 주말에 유동인구가 급격히 증가합니다.", 37.5509, 126.9244));
-
-        spots.add(new Spot(4, "명동거리", "서울", "상권/쇼핑",
-                "https://images.unsplash.com/photo-1668999980247-db74bc8be117?w=800&h=400&fit=crop&auto=format",
-                Spot.Level.FREE, 9410, "먹거리 노점과 글로벌 브랜드 상점들이 밀집한 대표적인 관광 쇼핑 명소입니다. 상대적으로 평일 낮 시간대는 한산합니다.", 37.5635, 126.9846));
-
-        spots.add(new Spot(5, "남산서울타워", "서울", "자연/전망",
-                "https://images.unsplash.com/photo-1712739034224-2904f23c4c5f?w=800&h=400&fit=crop&auto=format",
-                Spot.Level.NORMAL, 5640, "서울 시내를 한눈에 내려다볼 수 있는 대표적인 전망대입니다. 도심 속 자연을 느끼며 산책하기 좋으며 일몰 시간대에 방문객이 많습니다.", 37.5511, 126.9882));
-
-        return spots;
+    // 데이터 로딩 상태를 UI에 전달하기 위한 인터페이스
+    public interface OnSpotsLoadedListener {
+        void onSuccess(List<Spot> spots);
+        void onError(String message);
     }
 
-    // 관광지 검색
+    // 실시간 혼잡도 및 관광지 데이터 비동기 로딩 (서버 최적화 버전)
+    public static void fetchRealTimeSpots(OnSpotsLoadedListener listener) {
+        List<Spot> realTimeSpots = new ArrayList<>();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // 파이어베이스에서 관광지 기본 정보 가져오기
+        db.collection("spots").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+
+                // 파이어베이스에 데이터가 없는 경우 안전장치
+                if (task.getResult().isEmpty()) {
+                    cachedSpots = realTimeSpots;
+                    listener.onSuccess(realTimeSpots);
+                    return;
+                }
+
+                // 전체 혼잡도 데이터를 가져오는 API 호출
+                SeoulCrowdApiService api = RetrofitClient.getApiService();
+                api.getAllPopulation().enqueue(new Callback<CollectAllResponse>() {
+                    @Override
+                    public void onResponse(Call<CollectAllResponse> call, Response<CollectAllResponse> response) {
+
+                        // API로 받아온 데이터를 "이름"을 Key로 하는 Map에 담기 (매칭 속도 최적화: O(1))
+                        Map<String, CurrentPopulationResponse> apiDataMap = new HashMap<>();
+                        if (response.isSuccessful() && response.body() != null && response.body().collected != null) {
+                            for (CurrentPopulationResponse pop : response.body().collected) {
+                                apiDataMap.put(pop.area_name, pop);
+                            }
+                        }
+
+                        // 파이어베이스 데이터와 API 데이터를 이름(area_name) 기준으로 결합
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            // Firebase 실제 필드명 추출
+                            String name = document.getString("area_name");
+                            String category = document.getString("category");
+
+                            Double latObj = document.getDouble("lat");
+                            Double lngObj = document.getDouble("lng");
+                            double lat = latObj != null ? latObj : 0.0;
+                            double lng = lngObj != null ? lngObj : 0.0;
+
+                            // 고유 id가 없으므로 장소 이름의 해시코드를 임시 id로 사용
+                            int id = name != null ? Math.abs(name.hashCode()) : 0;
+                            String region = "서울";
+                            String imageUrl = ""; // Glide 에러 방지용 빈 문자열
+
+                            // 혼잡도 기본값 설정
+                            Spot.Level currentLevel = Spot.Level.FREE;
+                            int currentVisitors = 0;
+                            String description = "";
+
+                            // Firebase의 장소 이름이 API Map 데이터에 존재하면 해당 혼잡도로 덮어쓰기
+                            if (name != null && apiDataMap.containsKey(name)) {
+                                CurrentPopulationResponse popData = apiDataMap.get(name);
+                                currentLevel = Spot.parseLevel(popData.congestion_level);
+                                currentVisitors = (int) popData.population_midpoint;
+                                description = popData.congestion_message; // 혼잡도 메시지를 상세 설명으로 활용
+                            }
+
+                            // 조립된 최종 Spot 객체를 리스트에 추가
+                            Spot spot = new Spot(id, name, region, category, imageUrl, currentLevel, currentVisitors, description, lat, lng);
+                            realTimeSpots.add(spot);
+                        }
+
+                        // 캐시 갱신 및 UI 업데이트 콜백 실행
+                        cachedSpots = realTimeSpots;
+                        listener.onSuccess(realTimeSpots);
+                    }
+
+                    @Override
+                    public void onFailure(Call<CollectAllResponse> call, Throwable t) {
+                        android.util.Log.e("API_ERROR_LOG", "통신 실패 원인: ", t);
+                        // 통신 실패 시 앱 다운 방지 (모든 장소를 기본값 FREE로 세팅하여 표시)
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            String name = document.getString("area_name");
+                            String category = document.getString("category");
+                            int id = name != null ? Math.abs(name.hashCode()) : 0;
+
+                            Double latObj = document.getDouble("lat");
+                            Double lngObj = document.getDouble("lng");
+                            double lat = latObj != null ? latObj : 0.0;
+                            double lng = lngObj != null ? lngObj : 0.0;
+
+                            Spot spot = new Spot(id, name, "서울", category, "", Spot.Level.FREE, 0, "", lat, lng);
+                            realTimeSpots.add(spot);
+                        }
+                        cachedSpots = realTimeSpots;
+                        listener.onSuccess(realTimeSpots);
+                    }
+                });
+            } else {
+                listener.onError("Firebase 데이터를 불러오지 못했습니다.");
+            }
+        });
+    }
+
+    // 다른 클래스(Search, Map)에서 캐시된 데이터를 즉시 꺼내 쓸 수 있도록 제공
+    public static List<Spot> getSpots() {
+        return cachedSpots;
+    }
+
+    // 관광지 검색 로직 (캐시 기반)
     public static List<Spot> searchSpots(String query) {
         List<Spot> allSpots = getSpots();
         List<Spot> filteredSpots = new ArrayList<>();
 
-        // 키워드 필터링
         if (query == null || query.trim().isEmpty()) {
             filteredSpots.addAll(allSpots);
         } else {
             String cleanQuery = query.toLowerCase().trim();
             for (Spot spot : allSpots) {
-                if (spot.name.toLowerCase().contains(cleanQuery) ||
-                        spot.region.toLowerCase().contains(cleanQuery)) {
+                if (spot.name != null && spot.name.toLowerCase().contains(cleanQuery) ||
+                        spot.region != null && spot.region.toLowerCase().contains(cleanQuery)) {
                     filteredSpots.add(spot);
                 }
             }
         }
 
-        // 정렬 알고리즘
+        // 정렬 알고리즘: 혼잡도 높은 순 -> 이름 가나다 순
         filteredSpots.sort((spot1, spot2) -> {
-            // 혼잡도 레벨이 없을 경우 예외 방지 안전장치
             int level1 = spot1.level != null ? spot1.level.ordinal() : 0;
             int level2 = spot2.level != null ? spot2.level.ordinal() : 0;
 
             if (level1 != level2) {
-                // 혼잡도 내림차순 정렬
-                return Integer.compare(level2, level1);
+                return Integer.compare(level2, level1); // 내림차순
             } else {
-                // 혼잡도가 같으면 이름 가나다/ABC 오름차순 정렬
-                return spot1.name.compareTo(spot2.name);
+                return (spot1.name != null && spot2.name != null) ? spot1.name.compareTo(spot2.name) : 0;
             }
         });
 
         return filteredSpots;
     }
 
+    // ID로 특정 관광지 찾기 (상세 페이지 용)
     public static Spot findById(int id) {
         for (Spot spot : getSpots()) {
             if (spot.id == id) return spot;
         }
-        return getSpots().get(0);
+        return getSpots().isEmpty() ? null : getSpots().get(0); // 빈 데이터일 때 터짐 방지
     }
 
-    // 주간 차트(WeeklyCongestionChartView)에 부어줄 4단계 일주일 단위 더미 데이터 생성기
+    // 주간 차트용 더미 데이터
     public static List<Spot.Level> getWeeklyPrediction(int spotId) {
         List<Spot.Level> weeklyData = new ArrayList<>();
 
@@ -101,7 +195,7 @@ public class SpotRepository {
         return weeklyData;
     }
 
-    // 하버사인 공식을 이용해 두 위경도 사이의 거리를 미터(m) 단위로 계산
+    // 하버사인 공식을 이용한 거리 계산
     private static double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         double R = 6371e3; // 지구 반지름 (미터 단위)
         double phi1 = Math.toRadians(lat1);
@@ -114,12 +208,14 @@ public class SpotRepository {
                         Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        return R * c; // 거리 (m)
+        return R * c;
     }
 
-    // 기준 위치에서 가장 가까운 상위 5개 관광지 반환
+    // 내 위치 기반 가장 가까운 관광지 5개 반환 (초기 지도 화면 용)
     public static List<Spot> getNearbySpots(double currentLat, double currentLng) {
         List<Spot> allSpots = new ArrayList<>(getSpots());
+
+        if (allSpots.isEmpty()) return new ArrayList<>(); // 초기 구동 시 안전장치
 
         // 거리 기준 오름차순 정렬
         allSpots.sort((spot1, spot2) -> {
@@ -128,7 +224,6 @@ public class SpotRepository {
             return Double.compare(dist1, dist2);
         });
 
-        // 상위 5개만 추출 (데이터가 5개 미만일 경우를 대비해 Math.min 안전장치)
         return allSpots.subList(0, Math.min(5, allSpots.size()));
     }
 }

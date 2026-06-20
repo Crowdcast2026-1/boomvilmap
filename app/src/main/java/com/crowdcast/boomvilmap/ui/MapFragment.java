@@ -67,7 +67,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             mapFragment.getMapAsync(this);
         }
 
-        // 리사이클러뷰 초기화 (위치 받기 전까지는 빈 리스트로 대기)
+        // 리사이클러뷰 초기화
         RecyclerView recyclerView = view.findViewById(R.id.recycler_spots);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         mAdapter = new SpotAdapter(new ArrayList<>(), spotId ->
@@ -75,8 +75,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         );
         recyclerView.setAdapter(mAdapter);
 
-        // 에뮬레이터 GPS 기반 내 위치 가져오기 요청
-        requestLocationUpdate();
+        // UI 세팅이 끝나면, 서버에 데이터를 요청
+        loadMapData();
 
         ImageView imageMapSearchIcon = view.findViewById(R.id.image_map_search_icon);
         EditText editMapSearch = view.findViewById(R.id.edit_map_search);
@@ -84,10 +84,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         imageMapSearchIcon.setOnClickListener(v -> {
             String query = editMapSearch.getText().toString().trim();
             if (!query.isEmpty() && mMap != null) {
-                searchMarkerAndMoveCamera(query); // 기존에 만들어둔 카메라 이동 메서드 호출
+                searchMarkerAndMoveCamera(query);
             }
 
-            // 클릭 시 키보드 내리기
             android.view.inputmethod.InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
             if (imm != null) imm.hideSoftInputFromWindow(editMapSearch.getWindowToken(), 0);
         });
@@ -100,7 +99,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     searchMarkerAndMoveCamera(query);
                 }
 
-                // 검색 후 키보드 내리기
                 InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
                 if (imm != null) imm.hideSoftInputFromWindow(editMapSearch.getWindowToken(), 0);
 
@@ -109,7 +107,51 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             return false;
         });
     }
-    // 입력한 이름과 매칭되는 마커를 찾아 카메라를 이동시키는 메서드
+
+    // 서버에서 데이터를 비동기로 불러오고 화면을 갱신하는 메서드
+    private void loadMapData() {
+        SpotRepository.fetchRealTimeSpots(new SpotRepository.OnSpotsLoadedListener() {
+            @Override
+            public void onSuccess(List<Spot> spots) {
+                // UI 업데이트는 반드시 메인 스레드에서 실행
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        // 1. 데이터가 준비되었으니 내 위치를 잡아 어댑터(리스트)를 갱신합니다.
+                        requestLocationUpdate();
+
+                        // 2. 지도 마커 다시 그리기
+                        if (mMap != null) {
+                            mMap.clear(); // 기존 마커 초기화
+                            MarkerManager markerManager = new MarkerManager(mMap);
+                            Collection markerCollection = markerManager.newCollection();
+
+                            drawMarkersToCollection(markerCollection);
+
+                            // 클릭 이벤트 다시 연결
+                            markerCollection.setOnMarkerClickListener(marker -> {
+                                if (marker.getTag() != null) {
+                                    int spotId = (int) marker.getTag();
+                                    ((MainActivity) requireActivity()).showDetail(spotId);
+                                    return true;
+                                }
+                                return false;
+                            });
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() ->
+                            Toast.makeText(getContext(), "데이터 로드 실패: " + message, Toast.LENGTH_SHORT).show()
+                    );
+                }
+            }
+        });
+    }
+
     private void searchMarkerAndMoveCamera(String query) {
         List<Spot> spots = SpotRepository.getSpots();
         Spot targetSpot = null;
@@ -162,7 +204,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                requestLocationUpdate();
+                requestLocationUpdate(); // 권한 허용 시 다시 위치 요청
             }
         }
     }
@@ -171,14 +213,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
 
-        // 내 위치 활성화 핀
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             mMap.setMyLocationEnabled(true);
         }
 
-        MarkerManager markerManager = new MarkerManager(mMap);
-        Collection markerCollection = markerManager.newCollection();
-
+        // 초기 카메라 세팅 (서울 권역)
         LatLng southwest = new LatLng(37.4132, 126.7641);
         LatLng northeast = new LatLng(37.6824, 127.1843);
         LatLngBounds seoulBounds = new LatLngBounds(southwest, northeast);
@@ -188,6 +227,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(seoulStation, 13));
         mMap.setMinZoomPreference(10.0f);
 
+        // 데이터가 이미 로드되어 있을 경우를 대비한 초기 마커 그리기 (보통은 데이터가 나중에 오므로 0개가 그려짐)
+        MarkerManager markerManager = new MarkerManager(mMap);
+        Collection markerCollection = markerManager.newCollection();
         drawMarkersToCollection(markerCollection);
 
         markerCollection.setOnMarkerClickListener(marker -> {
@@ -202,7 +244,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private void drawMarkersToCollection(Collection collection) {
         List<Spot> spots = SpotRepository.getSpots();
-        if (spots == null || spots.isEmpty()) return;
+        if (spots == null || spots.isEmpty()) return; // 데이터가 없으면 그냥 리턴
 
         for (Spot spot : spots) {
             LatLng position = new LatLng(spot.lat, spot.lng);

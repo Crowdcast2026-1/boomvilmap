@@ -28,4 +28,15 @@ public class Spot {
         this.lat = lat;
         this.lng = lng;
     }
+
+    public static Level parseLevel(String levelString) {
+        if (levelString == null) return Level.FREE;
+        switch (levelString) {
+            case "붐빔": return Level.VERY_CROWDED;
+            case "약간 붐빔": return Level.CROWDED;
+            case "보통": return Level.NORMAL;
+            case "여유":
+            default: return Level.FREE;
+        }
+    }
 }
