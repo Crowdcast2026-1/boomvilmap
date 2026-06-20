@@ -31,10 +31,19 @@ public class Spot {
 
     public static Level parseLevel(String levelString) {
         if (levelString == null) return Level.FREE;
-        switch (levelString) {
+        String normalized = levelString.trim().toUpperCase().replace(" ", "_");
+        switch (normalized) {
+            case "VERY_CROWDED":
+            case "HIGH":
             case "붐빔": return Level.VERY_CROWDED;
-            case "약간 붐빔": return Level.CROWDED;
+            case "CROWDED":
+            case "약간_붐빔":
+            case "약간붐빔": return Level.CROWDED;
+            case "NORMAL":
+            case "MODERATE":
             case "보통": return Level.NORMAL;
+            case "FREE":
+            case "LOW":
             case "여유":
             default: return Level.FREE;
         }
