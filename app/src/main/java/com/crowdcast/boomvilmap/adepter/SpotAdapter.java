@@ -51,8 +51,13 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
         holder.level.setBackgroundResource(getLevelBackground(spot.level));
         holder.level.setTextColor(holder.itemView.getContext().getColor(getLevelTextColor(spot.level)));
 
-        Glide.with(holder.image.getContext()) // 오류 방지용 컨텍스트 수정
-                .load(spot.imageUrl)
+        // 이미지 URL이 비어있을 때를 대비한 안전장치 추가
+        String imageUrl = (spot.imageUrl != null && !spot.imageUrl.isEmpty()) ? spot.imageUrl : null;
+
+        Glide.with(holder.image.getContext())
+                .load(imageUrl)
+                .placeholder(android.R.color.darker_gray) // 로딩 중이거나 이미지가 없을 때 띄울 기본 배경
+                .error(android.R.color.darker_gray)       // 에러 발생 시 띄울 기본 배경
                 .centerCrop()
                 .into(holder.image);
 
