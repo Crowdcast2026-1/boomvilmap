@@ -12,16 +12,17 @@ public class RetrofitClient {
 
     public static SeoulCrowdApiService getApiService() {
         if (retrofit == null) {
-            // ⭐ 대기 시간을 30초로 늘려주는 옵션 추가
             OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
+                    .connectTimeout(15, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
                     .writeTimeout(30, TimeUnit.SECONDS)
+                    .callTimeout(75, TimeUnit.SECONDS)
+                    .retryOnConnectionFailure(true)
                     .build();
 
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
-                    .client(okHttpClient) // 위에서 설정한 타임아웃 적용
+                    .client(okHttpClient)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }
