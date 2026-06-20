@@ -3,6 +3,7 @@ package com.crowdcast.boomvilmap.network;
 import com.crowdcast.boomvilmap.model.CollectAllResponse;
 import com.crowdcast.boomvilmap.model.CurrentPopulationResponse;
 import com.crowdcast.boomvilmap.model.PredictionResponse;
+import com.crowdcast.boomvilmap.model.WeatherResponse;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
@@ -27,4 +28,13 @@ public interface SeoulCrowdApiService {
 
     @POST("collect/all")
     Call<CollectAllResponse> getAllPopulation();
+
+    @GET("https://api.open-meteo.com/v1/forecast")
+    Call<WeatherResponse> getCurrentWeather(
+            @Query("latitude") double latitude,
+            @Query("longitude") double longitude,
+            @Query("current") String currentVariables,
+            @Query("timezone") String timezone,
+            @Query("wind_speed_unit") String windSpeedUnit
+    );
 }
