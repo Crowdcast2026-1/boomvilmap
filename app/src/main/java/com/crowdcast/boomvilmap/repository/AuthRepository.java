@@ -64,4 +64,12 @@ public class AuthRepository {
                     }
                 });
     }
+
+    public boolean isLoggedIn() {
+        return auth.getCurrentUser() != null;
+    }
+
+    public void logout() {
+        auth.signOut();
+    }
 }
