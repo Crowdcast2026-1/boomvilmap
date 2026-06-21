@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.crowdcast.boomvilmap.R;
+import com.crowdcast.boomvilmap.repository.AuthRepository;
 
 public class MyPageFragment extends Fragment {
     @Nullable
@@ -25,7 +26,10 @@ public class MyPageFragment extends Fragment {
                 new AlertDialog.Builder(requireContext())
                         .setMessage("정말 로그아웃 하시겠어요?")
                         .setNegativeButton("취소", null)
-                        .setPositiveButton("로그아웃", (dialog, which) -> ((MainActivity) requireActivity()).showLogin())
+                        .setPositiveButton("로그아웃", (dialog, which) -> {
+                            new AuthRepository().logout();
+                            ((MainActivity) requireActivity()).showLogin();
+                        })
                         .show()
         );
     }
