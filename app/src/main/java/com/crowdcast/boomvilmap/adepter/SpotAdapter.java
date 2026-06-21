@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.crowdcast.boomvilmap.R;
 import com.crowdcast.boomvilmap.model.Spot;
+import com.crowdcast.boomvilmap.repository.SpotRepository;
 import java.util.List;
 
 public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder> {
@@ -51,8 +52,7 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
         holder.level.setBackgroundResource(getLevelBackground(spot.level));
         holder.level.setTextColor(holder.itemView.getContext().getColor(getLevelTextColor(spot.level)));
 
-        // 이미지 URL이 비어있을 때를 대비한 안전장치 추가
-        String imageUrl = (spot.imageUrl != null && !spot.imageUrl.isEmpty()) ? spot.imageUrl : null;
+        String imageUrl = SpotRepository.resolveImageUrl(spot.name, spot.category, spot.imageUrl);
 
         Glide.with(holder.image.getContext())
                 .load(imageUrl)
