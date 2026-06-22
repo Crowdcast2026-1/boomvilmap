@@ -10,6 +10,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.text.Collator;
+import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -36,6 +38,9 @@ public class SpotRepository {
     public interface OnSpotsLoadedListener {
         void onSuccess(List<Spot> spots);
         void onError(String message);
+
+        default void onStatus(CollectAllResponse response) {
+        }
     }
 
     public interface OnSpotLoadedListener {
@@ -48,11 +53,29 @@ public class SpotRepository {
         void onError(String message);
     }
 
+    public interface OnPredictionLoadedListener {
+        void onSuccess(PredictionResponse prediction);
+        void onError(String message);
+    }
+
+    public enum SearchSortOrder {
+        HIGH_TO_LOW,
+        LOW_TO_HIGH
+    }
+
     public static void fetchRealTimeSpots(OnSpotsLoadedListener listener) {
+        fetchRealTimeSpots(listener, false);
+    }
+
+    public static void refreshRealTimeSpots(OnSpotsLoadedListener listener) {
+        fetchRealTimeSpots(listener, true);
+    }
+
+    private static void fetchRealTimeSpots(OnSpotsLoadedListener listener, boolean forceRefresh) {
         long startedAtMs = System.currentTimeMillis();
         long now = System.currentTimeMillis();
 
-        if (!cachedSpots.isEmpty()) {
+        if (!forceRefresh && !cachedSpots.isEmpty()) {
             android.util.Log.d(TAG, "emit cached spots in " + (System.currentTimeMillis() - startedAtMs) + "ms");
             listener.onSuccess(new ArrayList<>(cachedSpots));
 
@@ -79,7 +102,7 @@ public class SpotRepository {
             }
 
             if (cachedSpots.isEmpty()) {
-                List<Spot> baseSpots = buildSpots(snapshot, new HashMap<>());
+                List<Spot> baseSpots = buildSpots(snapshot, new ArrayList<>());
                 cachedSpots = baseSpots;
                 android.util.Log.d(TAG, "emit base spots before population API in " + (System.currentTimeMillis() - startedAtMs) + "ms");
                 listener.onSuccess(new ArrayList<>(baseSpots));
@@ -136,16 +159,17 @@ public class SpotRepository {
         AtomicBoolean hasSuccess = new AtomicBoolean(false);
 
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Seoul"), Locale.KOREA);
-        String targetTime = new SimpleDateFormat("HH:00", Locale.KOREA).format(calendar.getTime());
+        String targetTime = "12:00";
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREA);
-        SimpleDateFormat labelFormat = new SimpleDateFormat("E", Locale.KOREA);
+        SimpleDateFormat dayLabelFormat = new SimpleDateFormat("E", Locale.KOREA);
+        SimpleDateFormat monthDayFormat = new SimpleDateFormat("M/d", Locale.KOREA);
 
         SeoulCrowdApiService api = RetrofitClient.getApiService();
         for (int i = 0; i < days; i++) {
             Calendar target = (Calendar) calendar.clone();
-            target.add(Calendar.DAY_OF_YEAR, i);
+            target.add(Calendar.DAY_OF_YEAR, i + 1);
             String targetDate = dateFormat.format(target.getTime());
-            labels[i] = labelFormat.format(target.getTime());
+            labels[i] = dayLabelFormat.format(target.getTime()) + "\n" + monthDayFormat.format(target.getTime());
 
             final int index = i;
             api.getPrediction(spot.name, targetDate, targetTime).enqueue(new Callback<PredictionResponse>() {
@@ -154,12 +178,15 @@ public class SpotRepository {
                     if (response.isSuccessful() && response.body() != null) {
                         levels[index] = Spot.parseLevel(response.body().predicted_congestion_level);
                         hasSuccess.set(true);
+                    } else {
+                        android.util.Log.e(TAG, "prediction failed: " + response.code() + " / " + spot.name + " / " + targetDate);
                     }
                     finishPredictionCall();
                 }
 
                 @Override
                 public void onFailure(Call<PredictionResponse> call, Throwable t) {
+                    android.util.Log.e(TAG, "prediction call failed: " + spot.name + " / " + targetDate, t);
                     finishPredictionCall();
                 }
 
@@ -174,7 +201,6 @@ public class SpotRepository {
                     List<Spot.Level> resultLevels = new ArrayList<>();
                     List<String> resultLabels = new ArrayList<>();
                     for (int j = 0; j < days; j++) {
-                        if (levels[j] == null) continue;
                         resultLevels.add(levels[j]);
                         resultLabels.add(labels[j]);
                     }
@@ -184,38 +210,186 @@ public class SpotRepository {
         }
     }
 
+    public static void fetchWeeklyPredictionForWeek(
+            Spot spot,
+            String selectedDate,
+            String targetTime,
+            OnWeeklyPredictionLoadedListener listener
+    ) {
+        if (spot == null || spot.name == null) {
+            listener.onError("관광지 정보를 찾을 수 없습니다.");
+            return;
+        }
+        if (selectedDate == null || selectedDate.trim().isEmpty()) {
+            listener.onError("예측 기준 날짜가 없습니다.");
+            return;
+        }
+
+        Calendar weekStart = Calendar.getInstance(TimeZone.getTimeZone("Asia/Seoul"), Locale.KOREA);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREA);
+        try {
+            weekStart.setTime(dateFormat.parse(selectedDate));
+        } catch (Exception e) {
+            listener.onError("예측 기준 날짜 형식이 올바르지 않습니다.");
+            return;
+        }
+
+        int dayOfWeek = weekStart.get(Calendar.DAY_OF_WEEK);
+        int daysFromMonday = dayOfWeek == Calendar.SUNDAY ? 6 : dayOfWeek - Calendar.MONDAY;
+        weekStart.add(Calendar.DAY_OF_YEAR, -daysFromMonday);
+
+        fetchWeeklyPredictionFromStart(spot, weekStart, valueOrDefault(targetTime, "12:00"), listener);
+    }
+
+    private static void fetchWeeklyPredictionFromStart(
+            Spot spot,
+            Calendar startDate,
+            String targetTime,
+            OnWeeklyPredictionLoadedListener listener
+    ) {
+        int days = 7;
+        Spot.Level[] levels = new Spot.Level[days];
+        String[] labels = new String[days];
+        AtomicInteger pending = new AtomicInteger(days);
+        AtomicBoolean hasSuccess = new AtomicBoolean(false);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREA);
+        SimpleDateFormat dayLabelFormat = new SimpleDateFormat("E", Locale.KOREA);
+        SimpleDateFormat monthDayFormat = new SimpleDateFormat("M/d", Locale.KOREA);
+
+        SeoulCrowdApiService api = RetrofitClient.getApiService();
+        for (int i = 0; i < days; i++) {
+            Calendar target = (Calendar) startDate.clone();
+            target.add(Calendar.DAY_OF_YEAR, i);
+            String targetDate = dateFormat.format(target.getTime());
+            labels[i] = dayLabelFormat.format(target.getTime()) + "\n" + monthDayFormat.format(target.getTime());
+
+            final int index = i;
+            api.getPrediction(spot.name, targetDate, targetTime).enqueue(new Callback<PredictionResponse>() {
+                @Override
+                public void onResponse(Call<PredictionResponse> call, Response<PredictionResponse> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        levels[index] = Spot.parseLevel(response.body().predicted_congestion_level);
+                        hasSuccess.set(true);
+                    } else {
+                        android.util.Log.e(TAG, "week prediction failed: " + response.code() + " / " + spot.name + " / " + targetDate);
+                    }
+                    finishPredictionCall();
+                }
+
+                @Override
+                public void onFailure(Call<PredictionResponse> call, Throwable t) {
+                    android.util.Log.e(TAG, "week prediction call failed: " + spot.name + " / " + targetDate, t);
+                    finishPredictionCall();
+                }
+
+                private void finishPredictionCall() {
+                    if (pending.decrementAndGet() != 0) return;
+
+                    if (!hasSuccess.get()) {
+                        listener.onError("주간 예측 API 호출에 실패했습니다.");
+                        return;
+                    }
+
+                    List<Spot.Level> resultLevels = new ArrayList<>();
+                    List<String> resultLabels = new ArrayList<>();
+                    for (int j = 0; j < days; j++) {
+                        resultLevels.add(levels[j]);
+                        resultLabels.add(labels[j]);
+                    }
+                    listener.onSuccess(resultLevels, resultLabels);
+                }
+            });
+        }
+    }
+
+    public static void fetchPrediction(Spot spot, String targetDate, String targetTime, OnPredictionLoadedListener listener) {
+        if (spot == null || spot.name == null || spot.name.trim().isEmpty()) {
+            listener.onError("예측할 관광지 이름이 없습니다.");
+            return;
+        }
+        if (targetDate == null || targetDate.trim().isEmpty()) {
+            listener.onError("예측 날짜를 선택해주세요.");
+            return;
+        }
+
+        SeoulCrowdApiService api = RetrofitClient.getApiService();
+        api.getPrediction(spot.name, targetDate, targetTime).enqueue(new Callback<PredictionResponse>() {
+            @Override
+            public void onResponse(Call<PredictionResponse> call, Response<PredictionResponse> response) {
+                if (!response.isSuccessful() || response.body() == null) {
+                    listener.onError("예측 API 실패: HTTP " + response.code());
+                    return;
+                }
+                listener.onSuccess(response.body());
+            }
+
+            @Override
+            public void onFailure(Call<PredictionResponse> call, Throwable t) {
+                listener.onError("예측 API 호출 실패: " + t.getMessage());
+            }
+        });
+    }
+
     public static List<Spot> getSpots() {
         return cachedSpots;
     }
 
     public static List<Spot> searchSpots(String query) {
+        return searchSpots(query, SearchSortOrder.HIGH_TO_LOW);
+    }
+
+    public static List<Spot> searchSpots(String query, SearchSortOrder sortOrder) {
         List<Spot> allSpots = getSpots();
         List<Spot> filteredSpots = new ArrayList<>();
 
-        if (query == null || query.trim().isEmpty()) {
+        String cleanQuery = normalizeSearchText(query);
+        if (cleanQuery.isEmpty()) {
             filteredSpots.addAll(allSpots);
         } else {
-            String cleanQuery = query.toLowerCase().trim();
             for (Spot spot : allSpots) {
-                boolean nameMatches = spot.name != null && spot.name.toLowerCase().contains(cleanQuery);
-                boolean regionMatches = spot.region != null && spot.region.toLowerCase().contains(cleanQuery);
-                if (nameMatches || regionMatches) {
+                boolean nameMatches = normalizeSearchText(spot.name).contains(cleanQuery);
+                boolean regionMatches = normalizeSearchText(spot.region).contains(cleanQuery);
+                boolean categoryMatches = normalizeSearchText(spot.category).contains(cleanQuery);
+                if (nameMatches || regionMatches || categoryMatches) {
                     filteredSpots.add(spot);
                 }
             }
         }
 
+        SearchSortOrder resolvedOrder = sortOrder != null ? sortOrder : SearchSortOrder.HIGH_TO_LOW;
+        Collator koreanCollator = Collator.getInstance(Locale.KOREA);
         filteredSpots.sort((spot1, spot2) -> {
-            int level1 = spot1.level != null ? spot1.level.ordinal() : 0;
-            int level2 = spot2.level != null ? spot2.level.ordinal() : 0;
+            int level1 = getLevelRank(spot1);
+            int level2 = getLevelRank(spot2);
 
             if (level1 != level2) {
-                return Integer.compare(level2, level1);
+                if (level1 < 0) return 1;
+                if (level2 < 0) return -1;
+                return resolvedOrder == SearchSortOrder.HIGH_TO_LOW
+                        ? Integer.compare(level2, level1)
+                        : Integer.compare(level1, level2);
             }
-            return (spot1.name != null && spot2.name != null) ? spot1.name.compareTo(spot2.name) : 0;
+
+            String name1 = spot1.name != null ? spot1.name : "";
+            String name2 = spot2.name != null ? spot2.name : "";
+            return koreanCollator.compare(name1, name2);
         });
 
         return filteredSpots;
+    }
+
+    private static int getLevelRank(Spot spot) {
+        if (spot == null || !spot.hasData || spot.level == null) return -1;
+        return spot.level.ordinal();
+    }
+
+    private static String normalizeSearchText(String value) {
+        if (value == null) return "";
+        return Normalizer.normalize(value, Normalizer.Form.NFC)
+                .toLowerCase(Locale.KOREA)
+                .replaceAll("\\s+", "")
+                .trim();
     }
 
     public static Spot findById(int id) {
@@ -278,16 +452,18 @@ public class SpotRepository {
             @Override
             public void onResponse(Call<CollectAllResponse> call, Response<CollectAllResponse> response) {
                 populationRequestInFlight = false;
-                Map<String, CurrentPopulationResponse> apiDataMap = new HashMap<>();
-                if (response.isSuccessful() && response.body() != null && response.body().collected != null) {
-                    for (CurrentPopulationResponse pop : response.body().collected) {
-                        if (pop.area_name != null) {
-                            apiDataMap.put(pop.area_name, pop);
-                        }
-                    }
+                if (!response.isSuccessful()) {
+                    listener.onError("API request failed: " + response.code());
+                    return;
                 }
 
-                List<Spot> spots = buildSpots(snapshot, apiDataMap);
+                CollectAllResponse body = response.body();
+                if (body != null) {
+                    listener.onStatus(body);
+                }
+
+                List<CurrentPopulationResponse> areas = getPopulationAreas(body);
+                List<Spot> spots = buildSpots(snapshot, areas);
                 cachedSpots = spots;
                 lastPopulationFetchAtMs = System.currentTimeMillis();
                 android.util.Log.d(TAG, "population API merged in " + (lastPopulationFetchAtMs - startedAtMs) + "ms");
@@ -308,43 +484,74 @@ public class SpotRepository {
                     return;
                 }
 
-                List<Spot> fallbackSpots = buildSpots(snapshot, new HashMap<>());
+                List<Spot> fallbackSpots = buildSpots(snapshot, new ArrayList<>());
                 cachedSpots = fallbackSpots;
                 listener.onSuccess(fallbackSpots);
             }
         });
     }
 
-    private static List<Spot> buildSpots(QuerySnapshot snapshot, Map<String, CurrentPopulationResponse> apiDataMap) {
+    private static List<CurrentPopulationResponse> getPopulationAreas(CollectAllResponse response) {
+        if (response == null) return new ArrayList<>();
+        if (response.areas != null) return response.areas;
+        if (response.collected != null) return response.collected;
+        return new ArrayList<>();
+    }
+
+    private static List<Spot> buildSpots(QuerySnapshot snapshot, List<CurrentPopulationResponse> areas) {
         List<Spot> spots = new ArrayList<>();
+        Map<String, SpotMetadata> metadataByName = new HashMap<>();
+        Map<String, SpotMetadata> metadataByCode = new HashMap<>();
+
         for (QueryDocumentSnapshot document : snapshot) {
             String name = document.getString("area_name");
-            String category = valueOrDefault(document.getString("category"), "");
-
-            Double latObj = document.getDouble("lat");
-            Double lngObj = document.getDouble("lng");
-            double lat = latObj != null ? latObj : 0.0;
-            double lng = lngObj != null ? lngObj : 0.0;
-
-            int id = name != null ? Math.abs(name.hashCode()) : 0;
-            String region = valueOrDefault(document.getString("region"), "서울");
-            String imageUrl = getImageUrl(document, name, category);
-            String description = valueOrDefault(document.getString("description"), "");
-
-            Spot spot = new Spot(id, name, region, category, imageUrl, Spot.Level.FREE, 0, description, lat, lng);
-            CurrentPopulationResponse population = name != null ? apiDataMap.get(name) : null;
-            spots.add(population != null ? applyPopulation(spot, population) : spot);
+            String areaCode = document.getString("area_code");
+            SpotMetadata metadata = SpotMetadata.fromDocument(document);
+            if (name != null) metadataByName.put(name, metadata);
+            if (areaCode != null) metadataByCode.put(areaCode, metadata);
         }
+
+        if (areas == null || areas.isEmpty()) {
+            for (SpotMetadata metadata : metadataByName.values()) {
+                spots.add(metadata.toSpot(null));
+            }
+            return spots;
+        }
+
+        for (CurrentPopulationResponse area : areas) {
+            String name = valueOrDefault(area.area_name, area.area_code);
+            SpotMetadata metadata = null;
+            if (area.area_code != null) metadata = metadataByCode.get(area.area_code);
+            if (metadata == null && area.area_name != null) metadata = metadataByName.get(area.area_name);
+            if (metadata == null) metadata = SpotMetadata.fromArea(area);
+
+            Spot baseSpot = metadata.toSpot(area);
+            spots.add(applyPopulation(baseSpot, area));
+        }
+
         return spots;
     }
 
     private static Spot applyPopulation(Spot spot, CurrentPopulationResponse population) {
-        Spot.Level level = Spot.parseLevel(population.congestion_level);
-        int visitors = (int) population.population_midpoint;
-        String description = valueOrDefault(population.congestion_message, spot.description);
+        String dataSource = valueOrDefault(population.data_source, "live");
+        boolean hasData = !"unavailable".equals(dataSource)
+                && (population.has_data == null || Boolean.TRUE.equals(population.has_data));
+
+        Spot.Level level = hasData ? Spot.parseLevel(population.congestion_level) : null;
+        int visitors = hasData && population.population_midpoint != null
+                ? (int) Math.round(population.population_midpoint)
+                : 0;
+        String description = hasData
+                ? valueOrDefault(population.congestion_message, spot.description)
+                : "데이터 없음";
+        String name = valueOrDefault(population.area_name, spot.name);
+        String areaCode = valueOrDefault(population.area_code, spot.areaCode);
+        Integer populationMin = hasData ? population.population_min : null;
+        Integer populationMax = hasData ? population.population_max : null;
+
         return new Spot(
                 spot.id,
-                spot.name,
+                name,
                 spot.region,
                 spot.category,
                 spot.imageUrl,
@@ -352,8 +559,85 @@ public class SpotRepository {
                 visitors,
                 description,
                 spot.lat,
-                spot.lng
+                spot.lng,
+                areaCode,
+                dataSource,
+                hasData,
+                populationMin,
+                populationMax,
+                valueOrDefault(population.observed_at, spot.observedAt),
+                valueOrDefault(population.source_updated_at, spot.sourceUpdatedAt)
         );
+    }
+
+    private static class SpotMetadata {
+        final String name;
+        final String areaCode;
+        final String region;
+        final String category;
+        final String imageUrl;
+        final String description;
+        final double lat;
+        final double lng;
+
+        SpotMetadata(String name, String areaCode, String region, String category, String imageUrl,
+                     String description, double lat, double lng) {
+            this.name = name;
+            this.areaCode = areaCode;
+            this.region = region;
+            this.category = category;
+            this.imageUrl = imageUrl;
+            this.description = description;
+            this.lat = lat;
+            this.lng = lng;
+        }
+
+        static SpotMetadata fromDocument(QueryDocumentSnapshot document) {
+            String name = document.getString("area_name");
+            String areaCode = document.getString("area_code");
+            String category = valueOrDefault(document.getString("category"), "");
+            String region = valueOrDefault(document.getString("region"), "서울");
+            String description = valueOrDefault(document.getString("description"), "");
+            Double latObj = document.getDouble("lat");
+            Double lngObj = document.getDouble("lng");
+            double lat = latObj != null ? latObj : 0.0;
+            double lng = lngObj != null ? lngObj : 0.0;
+            String imageUrl = getImageUrl(document, name, category);
+            return new SpotMetadata(name, areaCode, region, category, imageUrl, description, lat, lng);
+        }
+
+        static SpotMetadata fromArea(CurrentPopulationResponse area) {
+            String name = valueOrDefault(area.area_name, area.area_code);
+            String areaCode = valueOrDefault(area.area_code, "");
+            String imageUrl = resolveImageUrl(name, "", "");
+            return new SpotMetadata(name, areaCode, "서울", "", imageUrl, "", 0.0, 0.0);
+        }
+
+        Spot toSpot(CurrentPopulationResponse area) {
+            String resolvedName = area != null ? valueOrDefault(area.area_name, name) : name;
+            String resolvedCode = area != null ? valueOrDefault(area.area_code, areaCode) : areaCode;
+            String idKey = valueOrDefault(resolvedCode, resolvedName);
+            int id = idKey != null ? Math.abs(idKey.hashCode()) : 0;
+            return new Spot(
+                    id,
+                    resolvedName,
+                    region,
+                    category,
+                    resolveImageUrl(resolvedName, category, imageUrl),
+                    null,
+                    0,
+                    description,
+                    lat,
+                    lng,
+                    valueOrDefault(resolvedCode, ""),
+                    "unavailable",
+                    false,
+                    null,
+                    null,
+                    "",
+                    ""
+            );
+        }
     }
 
     private static void updateCachedSpot(Spot updatedSpot) {
