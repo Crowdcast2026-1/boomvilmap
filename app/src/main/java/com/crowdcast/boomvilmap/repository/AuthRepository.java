@@ -3,7 +3,12 @@ package com.crowdcast.boomvilmap.repository;
 import com.crowdcast.boomvilmap.model.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class AuthRepository {
 
@@ -18,6 +23,12 @@ public class AuthRepository {
     // 결과를 Fragment로 돌려주기 위한 콜백 인터페이스
     public interface AuthCallback {
         void onSuccess();
+        void onFailure(String errorMessage);
+    }
+
+    public interface UserCallback {
+        void onSuccess(User user);
+        void onLoggedOut();
         void onFailure(String errorMessage);
     }
 
@@ -69,7 +80,81 @@ public class AuthRepository {
         return auth.getCurrentUser() != null;
     }
 
+    public FirebaseUser getCurrentFirebaseUser() {
+        return auth.getCurrentUser();
+    }
+
+    public void loadCurrentUser(UserCallback callback) {
+        FirebaseUser firebaseUser = auth.getCurrentUser();
+        if (firebaseUser == null) {
+            callback.onLoggedOut();
+            return;
+        }
+
+        db.collection("users")
+                .document(firebaseUser.getUid())
+                .get()
+                .addOnSuccessListener(document -> {
+                    String email = valueOrDefault(document.getString("email"), firebaseUser.getEmail());
+                    String nickname = valueOrDefault(document.getString("nickname"), firebaseUser.getDisplayName());
+                    if (nickname == null || nickname.trim().isEmpty()) {
+                        nickname = nicknameFromEmail(email);
+                    }
+                    Long createdAt = document.getLong("createdAt");
+                    callback.onSuccess(new User(email, nickname, createdAt != null ? createdAt : 0L));
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    public void updateNickname(String nickname, AuthCallback callback) {
+        FirebaseUser firebaseUser = auth.getCurrentUser();
+        if (firebaseUser == null) {
+            callback.onFailure("로그인이 필요합니다.");
+            return;
+        }
+        if (nickname == null || nickname.trim().isEmpty()) {
+            callback.onFailure("닉네임을 입력해주세요.");
+            return;
+        }
+
+        String trimmedNickname = nickname.trim();
+        Map<String, Object> data = new HashMap<>();
+        data.put("nickname", trimmedNickname);
+        data.put("email", firebaseUser.getEmail());
+
+        db.collection("users")
+                .document(firebaseUser.getUid())
+                .set(data, SetOptions.merge())
+                .addOnSuccessListener(unused -> {
+                    UserProfileChangeRequest request = new UserProfileChangeRequest.Builder()
+                            .setDisplayName(trimmedNickname)
+                            .build();
+                    firebaseUser.updateProfile(request)
+                            .addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    callback.onSuccess();
+                                } else {
+                                    String message = task.getException() != null
+                                            ? task.getException().getMessage()
+                                            : "프로필 업데이트 실패";
+                                    callback.onFailure(message);
+                                }
+                            });
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
     public void logout() {
         auth.signOut();
+    }
+
+    private String valueOrDefault(String value, String defaultValue) {
+        return value != null && !value.trim().isEmpty() ? value : defaultValue;
+    }
+
+    private String nicknameFromEmail(String email) {
+        if (email == null || email.trim().isEmpty()) return "사용자";
+        int atIndex = email.indexOf('@');
+        return atIndex > 0 ? email.substring(0, atIndex) : email;
     }
 }
