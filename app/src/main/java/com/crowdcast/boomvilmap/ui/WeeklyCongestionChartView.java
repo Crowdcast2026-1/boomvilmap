@@ -53,13 +53,13 @@ public class WeeklyCongestionChartView extends View {
 
         float width = getWidth();
         float height = getHeight();
-        float bottomLabelHeight = 24f;
-        float chartHeight = height - bottomLabelHeight - 8f;
-        float gap = 10f;
+        float bottomLabelHeight = dpToPx(34);
+        float chartHeight = height - bottomLabelHeight - dpToPx(8);
+        float gap = dpToPx(8);
         float barWidth = (width - gap * (count + 1)) / count;
 
         paint.setTextAlign(Paint.Align.CENTER);
-        paint.setTextSize(12f);
+        paint.setTextSize(spToPx(11));
 
         for (int i = 0; i < count; i++) {
             float left = gap + i * (barWidth + gap);
@@ -69,10 +69,26 @@ public class WeeklyCongestionChartView extends View {
 
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(colors[i]);
-            canvas.drawRoundRect(new RectF(left, top, right, bottom), 8f, 8f, paint);
+            canvas.drawRoundRect(new RectF(left, top, right, bottom), dpToPx(6), dpToPx(6), paint);
 
             paint.setColor(Color.parseColor("#94A3B8"));
-            canvas.drawText(labels[i], left + barWidth / 2f, height - 6f, paint);
+            drawLabel(canvas, labels[i], left + barWidth / 2f, chartHeight + dpToPx(14));
         }
+    }
+
+    private void drawLabel(Canvas canvas, String label, float centerX, float firstBaseline) {
+        if (label == null) return;
+        String[] lines = label.split("\\n");
+        for (int i = 0; i < lines.length; i++) {
+            canvas.drawText(lines[i], centerX, firstBaseline + (i * dpToPx(14)), paint);
+        }
+    }
+
+    private float dpToPx(float dp) {
+        return dp * getResources().getDisplayMetrics().density;
+    }
+
+    private float spToPx(float sp) {
+        return sp * getResources().getDisplayMetrics().scaledDensity;
     }
 }
