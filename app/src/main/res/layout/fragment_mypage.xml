@@ -33,11 +33,13 @@
             android:padding="@dimen/section_padding">
 
             <TextView
+                android:id="@+id/text_profile_avatar"
                 android:layout_width="@dimen/profile_avatar_size"
                 android:layout_height="@dimen/profile_avatar_size"
                 android:background="@drawable/bg_button_primary"
                 android:gravity="center"
-                android:text="👤"
+                android:text="U"
+                android:textColor="@color/white"
                 android:textSize="28sp" />
 
             <LinearLayout
@@ -51,7 +53,7 @@
                     android:id="@+id/text_user_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="여행자 김민준"
+                    android:text="사용자"
                     android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -61,15 +63,16 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_xs"
-                    android:text="kiminjun@email.com"
+                    android:text="이메일 불러오는 중"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
 
                 <TextView
+                    android:id="@+id/text_user_stats"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_md"
-                    android:text="즐겨찾기 3곳 · 방문 12곳"
+                    android:text="즐겨찾기 -곳"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -78,45 +81,12 @@
                 android:id="@+id/button_edit_profile"
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/button_compact_height"
+                android:background="@drawable/bg_button_primary"
+                android:minWidth="64dp"
+                android:paddingHorizontal="@dimen/space_lg"
                 android:text="편집"
-                android:textColor="@color/primary"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="@dimen/section_padding"
-            android:text="알림 설정"
-            android:textColor="@color/text_muted"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/screen_padding"
-            android:layout_marginTop="@dimen/space_md"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical">
-
-            <Switch
-                android:id="@+id/switch_congestion_alert"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/header_height"
-                android:paddingHorizontal="@dimen/section_padding"
-                android:text="혼잡도 알림"
-                android:textColor="@color/text_primary"
-                android:textStyle="bold"
-                android:checked="true" />
-
-            <Switch
-                android:id="@+id/switch_event_alert"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/header_height"
-                android:paddingHorizontal="@dimen/section_padding"
-                android:text="이벤트 알림"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/white"
+                android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
 

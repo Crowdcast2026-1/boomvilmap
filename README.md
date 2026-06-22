@@ -1,78 +1,108 @@
-# 오늘 얼마나 붐빌까? (boomvilmap)
+# 붐빌지도 (boomvilmap)
 
-전국 주요 관광지의 혼잡도를 한눈에 확인하는 Android 앱입니다. 현재 저장소는 백엔드나 AI 모델 서버 없이, Java 기반 Android 단일 앱 모듈로 구성되어 있습니다.
+서울 주요 관광지의 현재 혼잡도와 미래 혼잡도 예측을 확인하는 Android 앱입니다.  
+현재 앱은 Java 기반 Android 단일 모듈이며, Firebase, Google Maps SDK, FastAPI 백엔드, Open-Meteo 날씨 API를 연동합니다.
 
 ## 프로젝트 주제
 
-**오늘 얼마나 붐빌까?**는 여행자가 관광지를 방문하기 전에 예상 혼잡도를 확인할 수 있도록 돕는 관광지 혼잡도 예측 앱입니다.
+**붐빌지도**는 여행자가 관광지를 방문하기 전에 현재 혼잡도, 예상 인구, 날씨, 미래 날짜/시간대 혼잡도 예측을 확인할 수 있도록 돕는 관광지 혼잡도 앱입니다.
 
-핵심 아이디어는 과거 관광객 데이터와 날짜 조건을 바탕으로 관광지별 방문객 수와 혼잡도를 제공하는 것입니다. 과거 날짜는 실제 데이터, 미래 날짜는 예측 데이터를 보여주는 방향으로 기획되어 있습니다.
+서울 주요 장소 POI 데이터를 기준으로 지도, 검색, 상세, 즐겨찾기, 마이페이지 기능을 제공합니다.
 
-## 서비스 내용
+## 현재 구현 기능
 
-- 전국 주요 관광지를 지도와 목록에서 탐색합니다.
-- 관광지별 현재 또는 예상 방문객 수를 확인합니다.
-- 혼잡도를 `LOW`, `MODERATE`, `HIGH` 단계로 표시합니다.
-- 관광지 상세 화면에서 지역, 카테고리, 설명, 방문객 수를 확인합니다.
-- 자주 보는 관광지는 즐겨찾기 화면에서 관리하는 방향으로 설계합니다.
-- 향후 공공데이터, 백엔드 API, AI 예측 모델을 연동해 실제 혼잡도 예측 서비스로 확장합니다.
-
-## 기획 기능
-
-| 기능 | 내용 | 현재 상태 |
-| --- | --- | --- |
-| 관광지 지도 | 전국 관광지 위치와 혼잡도를 지도에 표시 | 커스텀 지도 View와 샘플 핀 구현 |
-| 관광지 목록 | 주요 관광지 목록 표시 | 샘플 데이터 기반 구현 |
-| 관광지 상세 | 관광지 설명, 지역, 방문객 수, 혼잡도 표시 | 일부 구현 |
-| 날짜별 혼잡도 | 과거는 실제 데이터, 미래는 예측 데이터 표시 | 기획 단계 |
-| 주간 혼잡도 그래프 | 7일 단위 혼잡도 추이를 차트로 표시 | 커스텀 View 파일 존재, 연동 확장 필요 |
-| 검색 | 지역/카테고리 기반 관광지 탐색 | 기본 목록 화면 구현 |
-| 즐겨찾기 | 관심 관광지 저장 및 조회 | 샘플 목록 UI 구현 |
-| 로그인/회원가입 | 사용자별 즐겨찾기와 개인화 기능 기반 | UI 및 화면 전환 구현 |
-| AI 예측 | 방문객 수와 혼잡도 예측 | 서버/모델 미포함 |
-
-## 현재 구현 범위
-
-| 화면/기능 | 현재 상태 |
+| 기능 | 현재 상태 |
 | --- | --- |
-| 스플래시 | 앱 시작 화면 |
-| 로그인/회원가입 | 화면 전환 및 비밀번호 표시 토글 중심의 UI 구현 |
-| 지도 | `KoreaMapView` 커스텀 View로 대한민국 지도 형태와 관광지 핀 표시 |
-| 관광지 목록 | 샘플 관광지 데이터를 `RecyclerView`로 표시 |
-| 관광지 상세 | 선택한 관광지의 지역, 카테고리, 설명, 방문객 수 표시 |
-| 검색 | 샘플 관광지 목록 표시 |
-| 즐겨찾기 | 샘플 관광지 목록을 즐겨찾기 형태로 표시 |
-| 마이페이지 | 기본 화면 UI |
+| 로그인/회원가입 | Firebase Auth 연동, Firestore 사용자 저장, 이미지 캡챠, 로그인 세션 유지 |
+| 마이페이지 | 로그인 사용자 이메일/닉네임/가입일/즐겨찾기 수 표시, 닉네임 수정 |
+| 지도 | Google Maps SDK 사용, 현재 위치 기반 주변 관광지 5개 표시, 전체보기 전환 |
+| 지도 마커 | 혼잡도별 색상의 기본 핀 마커 표시, 마커 클릭 시 상세 화면 이동 |
+| 지도 API 상태 | 서울 실시간 인구 API 로딩/에러/fallback 상태 표시, 새로고침 버튼 제공 |
+| 지도 필터 | 혼잡도별 필터링 |
+| 지도 검색 | 키워드가 포함된 관광지로 카메라 이동 |
+| 검색 화면 | 한글 검색, 관광지명/지역/카테고리 검색, 혼잡도 높은순/낮은순 정렬 |
+| 관광지 카드 | 사진, 지역, 카테고리, 혼잡도, 예상 인구, 데이터 출처 표시 |
+| 관광지 상세 | 사진, 현재 혼잡도, 예상 인구, 기준 시간, 즐겨찾기, 날씨 표시 |
+| 혼잡도 예측 | 미래 날짜/시간 선택 후 해당 시점 예측 혼잡도 표시 |
+| 주간 예측 | 이번 주 또는 선택 날짜가 포함된 주의 혼잡도 예측 차트 표시 |
+| 즐겨찾기 | 로그인 사용자별 Firestore 즐겨찾기 추가/삭제/조회 |
 
-현재 데이터는 `SpotRepository`에 하드코딩된 샘플 데이터입니다. 실제 API 연동, 로그인 인증, DB, Google Maps SDK, AI 예측 서버는 아직 프로젝트에 포함되어 있지 않습니다.
+## 데이터 연동
 
-## 데이터 및 예측 확장 방향
+### FastAPI 백엔드
 
-향후 실제 서비스로 확장할 때 사용할 수 있는 데이터 후보입니다.
+Android 에뮬레이터 기준 기본 백엔드 주소는 다음과 같습니다.
 
-- 한국문화관광연구원 관광자원통계서비스
-- 한국관광 데이터랩
-- 공공데이터포털 주요관광지점 입장객통계
-- 날씨, 공휴일, 주말, 계절, 지역 이벤트 정보
-
-예측 결과는 다음과 같은 형태로 다룰 수 있습니다.
-
-```json
-{
-  "data_type": "PREDICTED",
-  "predicted_visitors": 14000,
-  "congestion_level": "HIGH",
-  "confidence": 0.85
-}
+```text
+http://10.0.2.2:8000/
 ```
 
-혼잡도 기준 예시:
+로컬 PC에서 직접 호출할 때의 백엔드 주소는 보통 다음과 같습니다.
 
-| 레벨 | 기준 예시 | 색상 |
-| --- | --- | --- |
-| LOW | 평균 대비 70% 이하 | Green |
-| MODERATE | 평균 대비 70~130% | Yellow |
-| HIGH | 평균 대비 130% 초과 | Red |
+```text
+http://127.0.0.1:8000/
+```
+
+실제 Android 기기에서 실행하는 경우 `RetrofitClient`의 `BASE_URL`을 개발 PC의 같은 네트워크 IP로 변경해야 합니다.
+
+현재 사용하는 주요 API:
+
+| API | 용도 |
+| --- | --- |
+| `GET /population/current/all` | 서울 주요 장소 전체 현재 혼잡도/인구 조회 |
+| `GET /population/current?area={areaName}` | 상세 화면 현재 혼잡도 조회 |
+| `GET /predictions?area={areaName}&target_date=YYYY-MM-DD&target_time=HH:MM` | 미래 혼잡도 예측 |
+
+`/population/current/all` 응답의 `areas` 배열을 기준으로 지도 마커, 주변 관광지 목록, 검색 목록을 렌더링합니다.
+
+데이터 출처 표시는 다음 규칙을 따릅니다.
+
+| `data_source` | 표시 |
+| --- | --- |
+| `live` | 실시간 |
+| `database_fallback` | 최근 저장 데이터 |
+| `unavailable` | 데이터 없음 |
+
+`has_data`가 `false`이거나 데이터가 없는 장소는 혼잡도/인구 값을 `-`로 표시합니다.
+
+### Firebase
+
+Firebase는 다음 용도로 사용합니다.
+
+- Firebase Auth: 이메일/비밀번호 로그인, 회원가입, 로그인 세션 확인
+- Firestore `users`: 사용자 이메일, 닉네임, 가입일 저장
+- Firestore 관광지 메타데이터: 장소명, POI 코드, 좌표, 지역, 카테고리, 이미지, 설명
+- Firestore `users/{uid}/favorites`: 사용자별 즐겨찾기 저장
+
+### Google Maps
+
+지도 화면은 `SupportMapFragment` 기반 Google Maps SDK를 사용합니다.
+
+- 서울 영역 기준 카메라 제한
+- 현재 위치 권한 요청
+- 핀치 줌, 줌 버튼, 스크롤/회전/기울이기 제스처 활성화
+- 혼잡도별 기본 핀 마커 표시
+
+### 날씨 API
+
+상세 화면의 온도, 습도, 풍속, 날씨 상태는 Open-Meteo API를 사용합니다.
+
+```text
+https://api.open-meteo.com/v1/forecast
+```
+
+## 화면 구성
+
+| 화면 | 설명 |
+| --- | --- |
+| Splash | 로그인 세션 확인 후 지도 또는 로그인 화면으로 이동 |
+| Login | Firebase Auth 로그인 |
+| SignUp | 캡챠 검증 후 Firebase Auth 회원가입 및 Firestore 사용자 저장 |
+| Map | Google Maps, 주변 관광지, 혼잡도 필터, 검색, 새로고침 |
+| Search | 관광지 검색 및 혼잡도 정렬 |
+| Favorites | 사용자별 즐겨찾기 목록 |
+| MyPage | 사용자 정보, 닉네임 수정, 로그아웃 |
+| Detail | 관광지 상세, 즐겨찾기, 날씨, 날짜/시간별 예측, 주간 예측 |
 
 ## 개발 환경
 
@@ -100,11 +130,17 @@
 | ConstraintLayout | 2.2.1 |
 | RecyclerView | 1.4.0 |
 | Glide | 5.0.7 |
+| Firebase BoM | 33.1.1 |
+| Firebase Auth | 로그인/회원가입 |
+| Firebase Firestore | 사용자, 관광지 메타데이터, 즐겨찾기 |
+| Google Maps SDK | 지도 |
+| Google Play Services Location | 현재 위치 |
+| Android Maps Utils | 지도 유틸 |
+| Retrofit | 2.11.0 |
+| Gson Converter | 2.11.0 |
 | JUnit | 4.13.2 |
 | AndroidX Test JUnit | 1.3.0 |
 | Espresso | 3.7.0 |
-
-의존성 버전은 `gradle/libs.versions.toml`과 `app/build.gradle`에 정의되어 있습니다.
 
 ## 프로젝트 구조
 
@@ -112,42 +148,48 @@
 boomvilmap/
 ├── app/
 │   ├── build.gradle
+│   ├── google-services.json        # 로컬 Firebase 설정 파일, gitignore 대상
 │   ├── proguard-rules.pro
 │   └── src/
 │       ├── main/
 │       │   ├── AndroidManifest.xml
 │       │   ├── java/com/crowdcast/boomvilmap/
-│       │   │   ├── MainActivity.java
-│       │   │   ├── SplashFragment.java
-│       │   │   ├── LoginFragment.java
-│       │   │   ├── SignUpFragment.java
-│       │   │   ├── MapFragment.java
-│       │   │   ├── SearchFragment.java
-│       │   │   ├── FavoritesFragment.java
-│       │   │   ├── MyPageFragment.java
-│       │   │   ├── DetailFragment.java
-│       │   │   ├── KoreaMapView.java
-│       │   │   ├── WeeklyCongestionChartView.java
-│       │   │   ├── Spot.java
-│       │   │   ├── SpotRepository.java
-│       │   │   ├── SpotAdapter.java
-│       │   │   └── FavoriteAdapter.java
+│       │   │   ├── adepter/
+│       │   │   │   ├── FavoriteAdapter.java
+│       │   │   │   └── SpotAdapter.java
+│       │   │   ├── model/
+│       │   │   │   ├── CollectAllResponse.java
+│       │   │   │   ├── CurrentPopulationResponse.java
+│       │   │   │   ├── PredictionResponse.java
+│       │   │   │   ├── Spot.java
+│       │   │   │   ├── User.java
+│       │   │   │   └── WeatherResponse.java
+│       │   │   ├── network/
+│       │   │   │   ├── RetrofitClient.java
+│       │   │   │   └── SeoulCrowdApiService.java
+│       │   │   ├── repository/
+│       │   │   │   ├── AuthRepository.java
+│       │   │   │   ├── FavoriteRepository.java
+│       │   │   │   ├── SpotRepository.java
+│       │   │   │   └── WeatherRepository.java
+│       │   │   ├── ui/
+│       │   │   │   ├── DetailFragment.java
+│       │   │   │   ├── FavoritesFragment.java
+│       │   │   │   ├── LoginFragment.java
+│       │   │   │   ├── MainActivity.java
+│       │   │   │   ├── MapFragment.java
+│       │   │   │   ├── MyPageFragment.java
+│       │   │   │   ├── SearchFragment.java
+│       │   │   │   ├── SignUpFragment.java
+│       │   │   │   ├── SplashFragment.java
+│       │   │   │   └── WeeklyCongestionChartView.java
+│       │   │   └── util/
+│       │   │       ├── CaptchaGenerator.java
+│       │   │       └── SeoulDataDumper.java
 │       │   └── res/
-│       │       ├── drawable/
-│       │       ├── layout/
-│       │       ├── menu/
-│       │       ├── mipmap-*/
-│       │       ├── values/
-│       │       ├── values-night/
-│       │       ├── values-sw390dp/
-│       │       ├── values-sw600dp/
-│       │       └── xml/
 │       ├── androidTest/
 │       └── test/
 ├── gradle/
-│   ├── libs.versions.toml
-│   ├── gradle-daemon-jvm.properties
-│   └── wrapper/
 ├── build.gradle
 ├── settings.gradle
 ├── gradle.properties
@@ -157,11 +199,12 @@ boomvilmap/
 
 ## 화면 흐름
 
-`MainActivity`가 단일 Activity로 동작하며 Fragment를 교체하는 구조입니다.
+`MainActivity`가 단일 Activity로 동작하며 Fragment를 교체합니다.
 
 ```text
 SplashFragment
-└── LoginFragment
+├── Firebase 로그인 세션 있음 -> MapFragment
+└── Firebase 로그인 세션 없음 -> LoginFragment
     ├── SignUpFragment
     └── MapFragment
         ├── DetailFragment
@@ -170,17 +213,26 @@ SplashFragment
         └── MyPageFragment
 ```
 
-하단 내비게이션 탭은 지도, 검색, 즐겨찾기, 마이페이지 4개입니다.
+하단 내비게이션 탭은 지도, 검색, 즐겨찾기, 마이페이지 4개입니다. 상세 화면에서는 하단 내비게이션을 숨깁니다.
 
 ## 로컬 설정
 
-Android Studio에서 프로젝트를 열면 `local.properties`가 로컬 Android SDK 경로로 생성됩니다.
+Android Studio에서 프로젝트를 열면 `local.properties`가 로컬 Android SDK 경로로 생성됩니다. Google Maps API 키도 같은 파일에 설정합니다.
 
 ```properties
 sdk.dir=C\:\\Users\\<사용자>\\AppData\\Local\\Android\\Sdk
+MAPS_API_KEY=<Google Maps API Key>
 ```
 
-`local.properties`, `.gradle/`, `.idea/`, `build/` 등 로컬/빌드 산출물은 `.gitignore`에 포함되어 있습니다.
+Firebase를 사용하려면 Firebase 콘솔에서 Android 앱을 등록하고 `app/google-services.json` 파일을 추가해야 합니다. 이 파일은 `.gitignore`에 포함되어 있습니다.
+
+FastAPI 백엔드는 앱 실행 전에 로컬에서 실행되어 있어야 합니다.
+
+```text
+http://127.0.0.1:8000
+```
+
+Android 에뮬레이터는 로컬 PC의 `127.0.0.1`에 직접 접근할 수 없으므로 앱 코드에서는 `http://10.0.2.2:8000/`을 사용합니다.
 
 ## 실행 및 빌드
 
@@ -213,10 +265,16 @@ app/src/test/java/com/crowdcast/boomvilmap/ExampleUnitTest.java
 app/src/androidTest/java/com/crowdcast/boomvilmap/ExampleInstrumentedTest.java
 ```
 
-## 향후 작업 후보
+최근 확인한 명령:
 
-- 실제 검색 필터 및 즐겨찾기 저장 로직 추가
-- API 클라이언트와 서버 연동 구조 추가
-- 인증 세션 관리 구현
-- 실제 지도 SDK 또는 지도 데이터 적용 여부 결정
-- 혼잡도 예측 데이터 소스와 모델/API 설계
+```powershell
+.\gradlew.bat assembleDebug
+.\gradlew.bat testDebugUnitTest
+```
+
+## 참고 및 남은 작업
+
+- 실제 기기 테스트 시 `RetrofitClient.BASE_URL`을 개발 PC의 LAN IP로 변경해야 합니다.
+- FastAPI 서버가 CORS를 제한하는 경우 백엔드에 허용 origin 설정이 필요합니다.
+- Firestore 관광지 메타데이터와 FastAPI POI 코드가 일치해야 지도 좌표, 이미지, 카테고리가 안정적으로 표시됩니다.
+- 카카오/Google 소셜 로그인 버튼은 UI가 있으나 현재 인증 로직은 이메일/비밀번호 기반입니다.

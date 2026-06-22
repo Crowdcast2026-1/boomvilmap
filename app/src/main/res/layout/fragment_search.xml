@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/app_background"
@@ -16,6 +15,7 @@
         android:paddingHorizontal="@dimen/screen_padding">
 
         <ImageView
+            android:id="@+id/image_search_icon"
             android:layout_width="@dimen/space_2xl"
             android:layout_height="@dimen/space_2xl"
             android:src="@drawable/ic_search_24"
@@ -29,6 +29,8 @@
             android:layout_weight="1"
             android:background="@drawable/bg_input"
             android:hint="관광지 이름, 지역 검색"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
             android:paddingHorizontal="@dimen/space_lg"
             android:singleLine="true" />
 
@@ -41,42 +43,13 @@
             android:tint="@color/text_muted" />
     </LinearLayout>
 
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/input_height"
-        android:background="@color/white"
-        android:scrollbars="none">
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chip_group_region"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="@dimen/screen_padding"
-            android:paddingVertical="@dimen/space_md"
-            app:singleSelection="true" />
-    </HorizontalScrollView>
-
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/input_height"
-        android:background="@color/white"
-        android:scrollbars="none">
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chip_group_category"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="@dimen/screen_padding"
-            android:paddingVertical="@dimen/space_md"
-            app:singleSelection="true" />
-    </HorizontalScrollView>
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/input_compact_height"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="@dimen/screen_padding">
+        android:paddingHorizontal="@dimen/screen_padding"
+        android:paddingVertical="@dimen/space_sm">
 
         <TextView
             android:id="@+id/text_result_count"
@@ -88,22 +61,39 @@
             android:textSize="13sp" />
 
         <TextView
+            android:id="@+id/text_sort_order"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="혼잡순"
-            android:textColor="@color/text_muted"
-            android:textSize="12sp" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingHorizontal="@dimen/space_md"
+            android:paddingVertical="@dimen/space_xs"
+            android:text="혼잡도 높은순"
+            android:textColor="@color/primary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_search_results"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll_search_results"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
+        android:fillViewport="false"
         android:paddingHorizontal="@dimen/screen_padding"
-        android:paddingTop="@dimen/space_md"
-        android:paddingBottom="@dimen/space_lg" />
+        android:paddingTop="0dp"
+        android:paddingBottom="@dimen/space_lg"
+        android:scrollbars="vertical">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_search_results"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:nestedScrollingEnabled="false" />
+    </androidx.core.widget.NestedScrollView>
 
     <LinearLayout
         android:id="@+id/layout_empty_search"

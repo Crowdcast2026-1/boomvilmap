@@ -1,4 +1,4 @@
-package com.crowdcast.boomvilmap;
+package com.crowdcast.boomvilmap.ui;
 
 import android.os.Bundle;
 import android.view.View;
@@ -8,7 +8,9 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
+import com.crowdcast.boomvilmap.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -49,17 +51,46 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
+        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
+            Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+            if (currentFragment instanceof DetailFragment) {
+                bottomNavigation.setVisibility(View.GONE);
+            } else {
+                bottomNavigation.setVisibility(View.VISIBLE);
+            }
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    getSupportFragmentManager().popBackStack();
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+
         if (savedInstanceState == null) {
             showSplash();
         }
     }
 
-    private void replace(Fragment fragment, boolean showBottomNav) {
+    private void replace(Fragment fragment, boolean showBottomNav, boolean addToBackStack) {
         bottomNavigation.setVisibility(showBottomNav ? View.VISIBLE : View.GONE);
-        getSupportFragmentManager()
+        FragmentTransaction transaction = getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .commit();
+                .replace(R.id.fragment_container, fragment);
+
+        if (addToBackStack) {
+            transaction.addToBackStack(null);
+        }
+        transaction.commitAllowingStateLoss();
+    }
+
+    private void replace(Fragment fragment, boolean showBottomNav) {
+        replace(fragment, showBottomNav, false);
     }
 
     public void showSplash() { replace(new SplashFragment(), false); }
@@ -71,6 +102,6 @@ public class MainActivity extends AppCompatActivity {
     public void showMyPage() { replace(new MyPageFragment(), true); }
 
     public void showDetail(int spotId) {
-        replace(DetailFragment.newInstance(spotId), false);
+        replace(DetailFragment.newInstance(spotId), false, true);
     }
 }

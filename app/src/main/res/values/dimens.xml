@@ -45,10 +45,11 @@
     <dimen name="weekly_chart_height">96dp</dimen>
 
     <dimen name="map_search_height">44dp</dimen>
+    <dimen name="map_status_top_margin">68dp</dimen>
     <dimen name="map_legend_width">78dp</dimen>
     <dimen name="map_legend_top_margin">72dp</dimen>
-    <dimen name="map_bottom_sheet_height">320dp</dimen>
-    <dimen name="map_bottom_sheet_peek_height">220dp</dimen>
+    <dimen name="map_bottom_sheet_height">400dp</dimen>
+    <dimen name="map_bottom_sheet_peek_height">250dp</dimen>
     <dimen name="bottom_sheet_handle_width">40dp</dimen>
     <dimen name="bottom_sheet_handle_height">4dp</dimen>
     <dimen name="password_strength_bar_height">4dp</dimen>

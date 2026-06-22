@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">오늘 얼마나 붐빌까?</string>
+    <string name="app_name">붐빌지도</string>
     <string name="app_subtitle">AI 기반 관광지 혼잡도 예측</string>
     <string name="loading">불러오는 중...</string>
     <string name="email">이메일</string>

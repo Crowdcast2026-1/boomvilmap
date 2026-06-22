@@ -24,7 +24,7 @@
                 android:layout_height="@dimen/button_icon_size"
                 android:background="@drawable/bg_input"
                 android:src="@drawable/ic_arrow_back_24"
-                android:tint="@color/text_primary" />
+                app:tint="@color/text_primary" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -127,16 +127,12 @@
                     android:orientation="horizontal"
                     android:paddingHorizontal="@dimen/space_xl">
 
-                    <TextView
+                    <ImageView
                         android:id="@+id/text_captcha"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:fontFamily="monospace"
-                        android:text="A7X2P"
-                        android:textColor="@color/primary"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
+                        android:scaleType="fitCenter" />
 
                     <Button
                         android:id="@+id/button_refresh_captcha"
