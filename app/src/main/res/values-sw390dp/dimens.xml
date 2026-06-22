@@ -45,6 +45,7 @@
     <dimen name="weekly_chart_height">110dp</dimen>
 
     <dimen name="map_search_height">46dp</dimen>
+    <dimen name="map_status_top_margin">78dp</dimen>
     <dimen name="map_legend_width">82dp</dimen>
     <dimen name="map_legend_top_margin">78dp</dimen>
     <dimen name="map_bottom_sheet_height">440dp</dimen>
