@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.crowdcast.boomvilmap.R;
 import com.crowdcast.boomvilmap.adepter.SpotAdapter;
+import com.crowdcast.boomvilmap.model.CollectAllResponse;
 import com.crowdcast.boomvilmap.model.Spot;
 import com.crowdcast.boomvilmap.repository.SpotRepository;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -56,6 +57,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private FusedLocationProviderClient mFusedLocationClient;
     private SpotAdapter mAdapter;
     private TextView textViewAll;
+    private TextView textMapStatus;
+    private ImageButton buttonRefreshMap;
     private BottomSheetBehavior<View> bottomSheetBehavior;
 
     private final Set<Spot.Level> visibleLevels = EnumSet.allOf(Spot.Level.class);
@@ -83,8 +86,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         RecyclerView recyclerView = view.findViewById(R.id.recycler_spots);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setNestedScrollingEnabled(true);
+        recyclerView.setHasFixedSize(false);
+        recyclerView.setNestedScrollingEnabled(false);
+        recyclerView.setFocusable(false);
         recyclerView.setOverScrollMode(View.OVER_SCROLL_ALWAYS);
         mAdapter = new SpotAdapter(new ArrayList<>(), spotId ->
                 ((MainActivity) requireActivity()).showDetail(spotId)
@@ -95,7 +99,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         setupSearch(view);
         setupFilter(view);
         setupViewAll(view);
-        loadMapData();
+        setupRefresh(view);
+        loadMapData(false);
     }
 
     private void setupBottomSheet(View view) {
@@ -137,6 +142,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         buttonFilter.setOnClickListener(v -> showFilterDialog());
     }
 
+    private void setupRefresh(View view) {
+        textMapStatus = view.findViewById(R.id.text_map_status);
+        buttonRefreshMap = view.findViewById(R.id.button_refresh_map);
+        buttonRefreshMap.setOnClickListener(v -> loadMapData(true));
+    }
+
     private void setupViewAll(View view) {
         textViewAll = view.findViewById(R.id.text_view_all);
         textViewAll.setOnClickListener(v -> {
@@ -149,12 +160,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         updateViewAllLabel();
     }
 
-    private void loadMapData() {
-        SpotRepository.fetchRealTimeSpots(new SpotRepository.OnSpotsLoadedListener() {
+    private void loadMapData(boolean forceRefresh) {
+        setLoadingState(true);
+        SpotRepository.OnSpotsLoadedListener listener = new SpotRepository.OnSpotsLoadedListener() {
             @Override
             public void onSuccess(List<Spot> spots) {
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> {
+                    setLoadingState(false);
+                    if (spots == null || spots.isEmpty()) {
+                        showStatus("표시할 서울 실시간 인구 데이터가 없습니다.");
+                    } else if (textMapStatus != null && textMapStatus.getText().toString().contains("불러오는 중")) {
+                        hideStatus();
+                    }
                     requestLocationUpdate();
                     refreshMapMarkers();
                     updateSpotList();
@@ -164,11 +182,25 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void onError(String message) {
                 if (getActivity() == null) return;
-                getActivity().runOnUiThread(() ->
-                        Toast.makeText(getContext(), "데이터 로드 실패: " + message, Toast.LENGTH_SHORT).show()
-                );
+                getActivity().runOnUiThread(() -> {
+                    setLoadingState(false);
+                    showStatus("데이터 로드 실패: " + message);
+                    Toast.makeText(getContext(), "데이터 로드 실패: " + message, Toast.LENGTH_SHORT).show();
+                });
             }
-        });
+
+            @Override
+            public void onStatus(CollectAllResponse response) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> showApiStatus(response));
+            }
+        };
+
+        if (forceRefresh) {
+            SpotRepository.refreshRealTimeSpots(listener);
+        } else {
+            SpotRepository.fetchRealTimeSpots(listener);
+        }
     }
 
     private void showFilterDialog() {
@@ -275,11 +307,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         LatLng seoulStation = new LatLng(DEFAULT_LAT, DEFAULT_LNG);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(seoulStation, 13));
-        mMap.setMinZoomPreference(10.0f);
+        mMap.setMinZoomPreference(9.0f);
+        mMap.setMaxZoomPreference(20.0f);
+        mMap.getUiSettings().setZoomGesturesEnabled(true);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setScrollGesturesEnabled(true);
+        mMap.getUiSettings().setRotateGesturesEnabled(true);
+        mMap.getUiSettings().setTiltGesturesEnabled(true);
 
         mMap.setOnMarkerClickListener(marker -> {
-            if (marker.getTag() != null) {
-                int spotId = (int) marker.getTag();
+            Object tag = marker.getTag();
+            if (tag instanceof Integer) {
+                int spotId = (int) tag;
                 ((MainActivity) requireActivity()).showDetail(spotId);
                 return true;
             }
@@ -307,12 +346,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         mMap.clear();
         for (Spot spot : filteredSpots) {
+            if (spot.lat == 0.0 && spot.lng == 0.0) continue;
+            LatLng spotLatLng = new LatLng(spot.lat, spot.lng);
             Marker marker = mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(spot.lat, spot.lng))
+                    .position(spotLatLng)
                     .title(spot.name)
-                    .snippet("실시간 혼잡도: " + levelToLabel(spot.level))
+                    .snippet(getMarkerSnippet(spot))
                     .icon(BitmapDescriptorFactory.defaultMarker(levelToMarkerColor(spot.level))));
-
             if (marker != null) {
                 marker.setTag(spot.id);
             }
@@ -355,9 +395,48 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             builder.append(spot.id)
                     .append(':')
                     .append(spot.level)
+                    .append(':')
+                    .append(spot.dataSource)
                     .append(';');
         }
         return builder.toString();
+    }
+
+    private void setLoadingState(boolean loading) {
+        if (buttonRefreshMap != null) {
+            buttonRefreshMap.setEnabled(!loading);
+            buttonRefreshMap.setAlpha(loading ? 0.45f : 1f);
+        }
+        if (loading) {
+            showStatus("서울 실시간 인구 데이터를 불러오는 중...");
+        }
+    }
+
+    private void showApiStatus(CollectAllResponse response) {
+        if (response == null) return;
+        if (!response.is_complete_live) {
+            showStatus("실시간 일부 지연, 최근 데이터 포함"
+                    + " · live " + response.live_success_count
+                    + " · fallback " + response.fallback_count
+                    + " · unavailable " + response.unavailable_count);
+        } else if (response.unavailable_count > 0 || response.error_count > 0) {
+            showStatus("일부 장소 데이터 없음"
+                    + " · unavailable " + response.unavailable_count
+                    + " · error " + response.error_count);
+        } else {
+            hideStatus();
+        }
+    }
+
+    private void showStatus(String message) {
+        if (textMapStatus == null) return;
+        textMapStatus.setText(message);
+        textMapStatus.setVisibility(View.VISIBLE);
+    }
+
+    private void hideStatus() {
+        if (textMapStatus == null) return;
+        textMapStatus.setVisibility(View.GONE);
     }
 
     private void updateViewAllLabel() {
@@ -381,14 +460,29 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    private String getMarkerSnippet(Spot spot) {
+        if (spot == null || !spot.hasData) return "데이터 없음";
+        return getSourceLabel(spot) + " · 혼잡도: " + levelToLabel(spot.level);
+    }
+
+    private String getSourceLabel(Spot spot) {
+        if ("database_fallback".equals(spot.dataSource)) return "최근 저장 데이터";
+        if ("unavailable".equals(spot.dataSource)) return "데이터 없음";
+        return "실시간";
+    }
+
     private float levelToMarkerColor(Spot.Level level) {
         if (level == null) return BitmapDescriptorFactory.HUE_GREEN;
         switch (level) {
-            case VERY_CROWDED: return BitmapDescriptorFactory.HUE_RED;
-            case CROWDED: return BitmapDescriptorFactory.HUE_ORANGE;
-            case NORMAL: return BitmapDescriptorFactory.HUE_YELLOW;
+            case VERY_CROWDED:
+                return BitmapDescriptorFactory.HUE_RED;
+            case CROWDED:
+                return BitmapDescriptorFactory.HUE_ORANGE;
+            case NORMAL:
+                return BitmapDescriptorFactory.HUE_YELLOW;
             case FREE:
-            default: return BitmapDescriptorFactory.HUE_GREEN;
+            default:
+                return BitmapDescriptorFactory.HUE_GREEN;
         }
     }
 }
