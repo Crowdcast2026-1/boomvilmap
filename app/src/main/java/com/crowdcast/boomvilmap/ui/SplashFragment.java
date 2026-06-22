@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.crowdcast.boomvilmap.R;
+import com.crowdcast.boomvilmap.repository.AuthRepository;
 
 public class SplashFragment extends Fragment {
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -34,12 +35,25 @@ public class SplashFragment extends Fragment {
                 progress += 2;
                 progressBar.setProgress(progress);
                 if (progress >= 100) {
-                    handler.postDelayed(() -> ((MainActivity) requireActivity()).showLogin(), 300);
+                    handler.postDelayed(() -> {
+                        AuthRepository authRepository = new AuthRepository();
+                        if (authRepository.isLoggedIn()) {
+                            ((MainActivity) requireActivity()).showMap();
+                        } else {
+                            ((MainActivity) requireActivity()).showLogin();
+                        }
+                    }, 300);
                 } else {
                     handler.postDelayed(this, 40);
                 }
             }
         };
         handler.post(runnable);
+    }
+
+    @Override
+    public void onDestroyView() {
+        handler.removeCallbacksAndMessages(null);
+        super.onDestroyView();
     }
 }

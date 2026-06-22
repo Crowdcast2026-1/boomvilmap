@@ -45,6 +45,14 @@
                 android:textSize="14sp" />
 
             <ImageButton
+                android:id="@+id/button_refresh_map"
+                android:layout_width="@dimen/button_icon_size"
+                android:layout_height="@dimen/button_icon_size"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_refresh_24"
+                android:tint="@color/primary" />
+
+            <ImageButton
                 android:id="@+id/button_filter"
                 android:layout_width="@dimen/button_icon_size"
                 android:layout_height="@dimen/button_icon_size"
@@ -52,6 +60,19 @@
                 android:src="@drawable/ic_tune_24"
                 android:tint="@color/primary" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/text_map_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/screen_padding"
+            android:layout_marginTop="@dimen/map_status_top_margin"
+            android:background="@drawable/bg_card"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingVertical="@dimen/space_md"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
         <LinearLayout
             android:layout_width="@dimen/map_legend_width"
@@ -76,6 +97,7 @@
         android:layout_height="@dimen/map_bottom_sheet_height"
         android:background="@drawable/bg_white_round_16"
         android:orientation="vertical"
+        app:behavior_hideable="false"
         app:behavior_peekHeight="@dimen/map_bottom_sheet_peek_height"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
@@ -113,14 +135,24 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_spots"
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scroll_spots"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:clipToPadding="false"
-            android:paddingHorizontal="@dimen/screen_padding"
+            android:fillViewport="false"
             android:paddingTop="@dimen/space_lg"
-            android:paddingBottom="@dimen/space_xl" />
+            android:paddingBottom="@dimen/space_xl"
+            android:scrollbars="vertical">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_spots"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:paddingHorizontal="@dimen/screen_padding" />
+        </androidx.core.widget.NestedScrollView>
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.crowdcast.boomvilmap.R;
 import com.crowdcast.boomvilmap.model.Spot;
+import com.crowdcast.boomvilmap.repository.SpotRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,12 +23,30 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Favori
         void onSpotClick(int spotId);
     }
 
+    public interface OnFavoriteDeleteListener {
+        void onFavoriteDelete(int spotId, int adapterPosition);
+    }
+
     private final List<Spot> favorites;
     private final OnSpotClickListener listener;
+    private final OnFavoriteDeleteListener deleteListener;
 
-    public FavoriteAdapter(List<Spot> favorites, OnSpotClickListener listener) {
+    public FavoriteAdapter(List<Spot> favorites, OnSpotClickListener listener, OnFavoriteDeleteListener deleteListener) {
         this.favorites = new ArrayList<>(favorites);
         this.listener = listener;
+        this.deleteListener = deleteListener;
+    }
+
+    public void updateData(List<Spot> newFavorites) {
+        favorites.clear();
+        favorites.addAll(newFavorites);
+        notifyDataSetChanged();
+    }
+
+    public void removeAt(int adapterPosition) {
+        if (adapterPosition < 0 || adapterPosition >= favorites.size()) return;
+        favorites.remove(adapterPosition);
+        notifyItemRemoved(adapterPosition);
     }
 
     @NonNull
@@ -43,12 +62,16 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Favori
 
         holder.name.setText(spot.name);
         holder.region.setText(spot.region);
+        holder.category.setText(spot.category);
         holder.level.setText(getLevelLabel(spot.level));
         holder.level.setBackgroundResource(getLevelBackground(spot.level));
         holder.level.setTextColor(holder.itemView.getContext().getColor(getLevelTextColor(spot.level)));
 
+        String imageUrl = SpotRepository.resolveImageUrl(spot.name, spot.category, spot.imageUrl);
         Glide.with(holder.image)
-                .load(spot.imageUrl)
+                .load(imageUrl)
+                .placeholder(android.R.color.darker_gray)
+                .error(android.R.color.darker_gray)
                 .centerCrop()
                 .into(holder.image);
 
@@ -62,8 +85,9 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Favori
             int adapterPosition = holder.getBindingAdapterPosition();
             if (adapterPosition == RecyclerView.NO_POSITION) return;
 
-            favorites.remove(adapterPosition);
-            notifyItemRemoved(adapterPosition);
+            if (deleteListener != null) {
+                deleteListener.onFavoriteDelete(spot.id, adapterPosition);
+            }
         });
     }
 
@@ -110,6 +134,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Favori
         ImageView image;
         TextView name;
         TextView region;
+        TextView category;
         TextView level;
         ImageButton deleteButton;
 
@@ -118,6 +143,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Favori
             image = itemView.findViewById(R.id.image_favorite);
             name = itemView.findViewById(R.id.text_favorite_name);
             region = itemView.findViewById(R.id.text_favorite_region);
+            category = itemView.findViewById(R.id.text_favorite_category);
             level = itemView.findViewById(R.id.text_favorite_level);
             deleteButton = itemView.findViewById(R.id.button_delete_favorite);
         }

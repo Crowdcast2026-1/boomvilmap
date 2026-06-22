@@ -10,6 +10,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.crowdcast.boomvilmap.R;
 import com.crowdcast.boomvilmap.model.Spot;
+import com.crowdcast.boomvilmap.repository.SpotRepository;
+
+import java.util.Locale;
+
 import java.util.List;
 
 public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder> {
@@ -47,12 +51,13 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
         holder.region.setText(spot.region);
         holder.category.setText(spot.category);
         holder.level.setText(getLevelLabel(spot.level));
+        holder.population.setText(getPopulationLabel(spot));
+        holder.sourceBadge.setText(getSourceLabel(spot));
 
         holder.level.setBackgroundResource(getLevelBackground(spot.level));
         holder.level.setTextColor(holder.itemView.getContext().getColor(getLevelTextColor(spot.level)));
 
-        // 이미지 URL이 비어있을 때를 대비한 안전장치 추가
-        String imageUrl = (spot.imageUrl != null && !spot.imageUrl.isEmpty()) ? spot.imageUrl : null;
+        String imageUrl = SpotRepository.resolveImageUrl(spot.name, spot.category, spot.imageUrl);
 
         Glide.with(holder.image.getContext())
                 .load(imageUrl)
@@ -74,7 +79,7 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
     }
 
     private String getLevelLabel(Spot.Level level) {
-        if (level == null) return "여유";
+        if (level == null) return "-";
         switch (level) {
             case VERY_CROWDED: return "붐빔";
             case CROWDED: return "약간 붐빔";
@@ -85,7 +90,7 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
     }
 
     private int getLevelBackground(Spot.Level level) {
-        if (level == null) return R.drawable.bg_low;
+        if (level == null) return R.drawable.bg_chip_gray;
         switch (level) {
             case VERY_CROWDED: return R.drawable.bg_high;
             case CROWDED: return R.drawable.bg_crowded;
@@ -96,7 +101,7 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
     }
 
     private int getLevelTextColor(Spot.Level level) {
-        if (level == null) return R.color.low_text;
+        if (level == null) return R.color.text_secondary;
         switch (level) {
             case VERY_CROWDED: return R.color.high_text;
             case CROWDED: return R.color.crowded_text;
@@ -106,12 +111,28 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
         }
     }
 
+    private String getPopulationLabel(Spot spot) {
+        if (spot == null || !spot.hasData) return "예상 인구 -";
+        if (spot.populationMin != null && spot.populationMax != null) {
+            return String.format(Locale.KOREA, "예상 인구 %,d~%,d명", spot.populationMin, spot.populationMax);
+        }
+        return String.format(Locale.KOREA, "중간값 %,d명", spot.visitors);
+    }
+
+    private String getSourceLabel(Spot spot) {
+        if (spot == null || "unavailable".equals(spot.dataSource)) return "데이터 없음";
+        if ("database_fallback".equals(spot.dataSource)) return "최근 저장 데이터";
+        return "실시간";
+    }
+
     static class SpotViewHolder extends RecyclerView.ViewHolder {
         ImageView image;
         TextView name;
         TextView region;
         TextView category;
         TextView level;
+        TextView population;
+        TextView sourceBadge;
 
         SpotViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -120,6 +141,8 @@ public class SpotAdapter extends RecyclerView.Adapter<SpotAdapter.SpotViewHolder
             region = itemView.findViewById(R.id.text_region);
             category = itemView.findViewById(R.id.text_category);
             level = itemView.findViewById(R.id.text_level);
+            population = itemView.findViewById(R.id.text_population);
+            sourceBadge = itemView.findViewById(R.id.text_source_badge);
         }
     }
 }
