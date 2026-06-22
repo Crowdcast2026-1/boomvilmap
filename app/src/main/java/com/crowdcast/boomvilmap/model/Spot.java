@@ -14,9 +14,24 @@ public class Spot {
     public final String description;
     public final double lat;
     public final double lng;
+    public final String areaCode;
+    public final String dataSource;
+    public final boolean hasData;
+    public final Integer populationMin;
+    public final Integer populationMax;
+    public final String observedAt;
+    public final String sourceUpdatedAt;
 
     public Spot(int id, String name, String region, String category, String imageUrl,
                 Level level, int visitors, String description, double lat, double lng) {
+        this(id, name, region, category, imageUrl, level, visitors, description, lat, lng,
+                "", "unavailable", true, null, null, "", "");
+    }
+
+    public Spot(int id, String name, String region, String category, String imageUrl,
+                Level level, int visitors, String description, double lat, double lng,
+                String areaCode, String dataSource, boolean hasData,
+                Integer populationMin, Integer populationMax, String observedAt, String sourceUpdatedAt) {
         this.id = id;
         this.name = name;
         this.region = region;
@@ -27,6 +42,13 @@ public class Spot {
         this.description = description;
         this.lat = lat;
         this.lng = lng;
+        this.areaCode = areaCode;
+        this.dataSource = dataSource;
+        this.hasData = hasData;
+        this.populationMin = populationMin;
+        this.populationMax = populationMax;
+        this.observedAt = observedAt;
+        this.sourceUpdatedAt = sourceUpdatedAt;
     }
 
     public static Level parseLevel(String levelString) {
