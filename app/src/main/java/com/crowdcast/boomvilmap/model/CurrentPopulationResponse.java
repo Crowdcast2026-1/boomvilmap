@@ -7,11 +7,14 @@ public class CurrentPopulationResponse {
     public String source_updated_at;
     public String congestion_level;
     public String congestion_message;
-    public int population_min;
-    public int population_max;
-    public double population_midpoint;
-    public double male_rate;
-    public double female_rate;
-    public double resident_rate;
-    public double non_resident_rate;
+    public Integer population_min;
+    public Integer population_max;
+    public Double population_midpoint;
+    public Double male_rate;
+    public Double female_rate;
+    public Double resident_rate;
+    public Double non_resident_rate;
+    public String data_source;
+    public Boolean has_data;
+    public String live_error;
 }
