@@ -37,6 +37,11 @@ public class FavoriteRepository {
         void onError(String message);
     }
 
+    public interface FavoriteCountCallback {
+        void onSuccess(int count);
+        void onError(String message);
+    }
+
     public boolean isLoggedIn() {
         return auth.getCurrentUser() != null;
     }
@@ -129,6 +134,21 @@ public class FavoriteRepository {
                     }
                     callback.onSuccess(favorites);
                 })
+                .addOnFailureListener(e -> callback.onError(e.getMessage()));
+    }
+
+    public void loadFavoriteCount(FavoriteCountCallback callback) {
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null) {
+            callback.onSuccess(0);
+            return;
+        }
+
+        db.collection("users")
+                .document(user.getUid())
+                .collection("favorites")
+                .get()
+                .addOnSuccessListener(querySnapshot -> callback.onSuccess(querySnapshot.size()))
                 .addOnFailureListener(e -> callback.onError(e.getMessage()));
     }
 
