@@ -7,7 +7,6 @@ import com.crowdcast.boomvilmap.model.WeatherResponse;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
-import retrofit2.http.POST;
 import retrofit2.http.Query;
 
 public interface SeoulCrowdApiService {
@@ -26,7 +25,7 @@ public interface SeoulCrowdApiService {
             @Query("target_time") String targetTime  // 형식: HH:MM
     );
 
-    @POST("collect/all")
+    @GET("population/current/all")
     Call<CollectAllResponse> getAllPopulation();
 
     @GET("https://api.open-meteo.com/v1/forecast")
